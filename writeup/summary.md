@@ -100,7 +100,7 @@ Then I made a rule for everything after: **shadow → validate on recorded data 
 ![Trading and launch pipelines](figures/fig11_pipelines.png)
 
 - **It caught real bugs.** The first pilot built under the new process passed 24 happy-path tests and still had four critical bugs: a double buy, an oversell, a lease lapse, and a crash on a stale price. The break-test found all four before they touched capital.
-- **Bugs kept appearing afterwards,** for example a 39-minute stall and a false loss halt, but none of them cost real capital.
+- **Bugs kept appearing afterwards,** for example a 39-minute stall and a false loss halt, but none of them cost capital.
 
 **What ran live after the reset:**
 
