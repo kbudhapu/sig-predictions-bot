@@ -4,7 +4,7 @@
 
 - **The edge:** SIG's crowd underpriced favourites against Polymarket and Kalshi. Bought on SIG and held to settlement, they made **+10.9c per share on 77 markets** (90% interval +6.5c to +15.0c).
 - **The failure:** I lost $15k in launch week by putting features live before testing them.
-- **The fix:** a shadow → validate → break-test → small isolated pilot → scale process. After it, no bug cost real capital, and the account climbed +$21k from the trough.
+- **The fix:** a shadow → validate → break-test → small isolated pilot → scale process. After it, no bug cost capital, and the account climbed +$21k from the trough.
 
 ![System architecture](writeup/figures/fig10_system_architecture.png)
 

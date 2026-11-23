@@ -270,7 +270,7 @@ Claude built the trader from a study of Polymarket on 2024 election night:
   My instruction to Claude on Oct 9 was to try to break each feature before it went live, because "we keep having this problem before we put things live."
 - **The process caught what the old habit would have shipped.**
   - The fresh-gap pilot passed 24 happy-path tests and still had 4 critical bugs: a lease lapse, a double buy, an oversell, and a crash on a stale price. The break-test found all four.
-  - Later bugs still happened, but none cost real capital. Rotation bought nothing for a while and a false loss halt fired. A 39-minute stall froze the main trading cycle, and a maker-entry over-commit was cancelled before any order filled. Rejected recycling code reached the server by accident and placed exit orders that never filled. That last one created the rule: diff the candidate against live before every deploy.
+  - Later bugs still happened, but none cost capital. Rotation bought nothing for a while and a false loss halt fired. A 39-minute stall froze the main trading cycle, and a maker-entry over-commit was cancelled before any order filled. Rejected recycling code reached the server by accident and placed exit orders that never filled. That last one created the rule: diff the candidate against live before every deploy.
 
 ![Trading and launch pipelines](figures/fig11_pipelines.png)
 
