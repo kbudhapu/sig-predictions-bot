@@ -231,7 +231,7 @@ def sig_pipeline():
     W, H = 17.2, 9.4
     fig, ax = canvas(W, H)
     header(ax, W, H, "SIG Predictions Cup (2026 midterms): trading and launch pipelines",
-           "+$8,849 on a 100,000 start, rank 557 of 1,969 ranked traders (provisional until House, Senate and MN-01 settle)")
+           "+$8,849 on a 100,000 start, rank 557 of 5,141 participants, top 11% (provisional until House, Senate and MN-01 settle)")
     bw, gap, bh = 2.45, 0.35, 1.55
 
     def lane(y, label, items, notes=None):

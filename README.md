@@ -1,6 +1,6 @@
 # SIG Predictions Cup (2026 midterms): an automated trading bot
 
-**+$8,849 on a 100,000 start, rank 557 of 1,969 ranked traders** in Susquehanna's (SIG's) simulated prediction-market tournament on the 2026 US midterms (provisional until the last markets settle). I built and ran a fully automated trading service across 237 binary election markets from Oct 1 to Nov 4, 2026, with Claude (Anthropic's model, through Claude Code) as my engineering partner.
+**+$8,849 on a 100,000 start, rank 557 of 5,141 participants (top 11%)** in Susquehanna's (SIG's) simulated prediction-market tournament on the 2026 US midterms (provisional until the last markets settle). I built and ran a fully automated trading service across 237 binary election markets from Oct 1 to Nov 4, 2026, with Claude (Anthropic's model, through Claude Code) as my engineering partner.
 
 - **The edge:** SIG's crowd underpriced favourites against Polymarket and Kalshi. Bought on SIG and held to settlement, they made **+10.9c per share on 77 markets** (90% interval +6.5c to +15.0c).
 - **The failure:** I lost $15k in launch week by putting features live before testing them.

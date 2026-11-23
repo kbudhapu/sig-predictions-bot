@@ -2,7 +2,7 @@
 
 > **Provisional (as of 2026-11-22).** House and Senate control are closed but unsettled. I hold 6,447 YES on "Democrats win the House" and 2,105 YES on "Democrats win the Senate", marked at $7,917. If both settle YES they pay $8,552, and the final P&L would be about **+$9,484**. Lines marked <!-- UPDATE --> change at settlement; the checklist at the end lists them.
 
-**Result so far: +$8,849 total P&L, rank 557 of 1,969 ranked traders (top 28%; top 11% of all 5,141 members).** <!-- UPDATE -->
+**Result so far: +$8,849 total P&L, rank 557 of 5,141 participants (top 11%).** <!-- UPDATE -->
 
 **The path:**
 - **End of day one (Oct 1): +$3,047,** from the venue's own account history. By my recollection that was around rank 70 of ~700; the venue keeps no past leaderboards.

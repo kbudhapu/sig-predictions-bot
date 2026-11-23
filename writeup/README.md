@@ -2,7 +2,7 @@
 
 > **Provisional (as of 2026-11-22).** Two markets, House and Senate control, are closed but not yet settled. Those positions are marked at $7,917; if both settle YES they pay $8,552, which would make the final P&L about **+$9,484**. The rank can still move. Every number marked <!-- UPDATE --> changes at settlement.
 
-**Result so far: +$8,849 on a 100,000 start, rank 557 of 1,969 ranked traders (top 28%).** <!-- UPDATE --> The board lists only accounts that traded; the tournament had 5,141 members, so that's the top 11% of everyone who joined.
+**Result so far: +$8,849 on a 100,000 start, rank 557 of 5,141 participants (top 11%).** <!-- UPDATE --> The leaderboard lists only the 1,969 accounts that traded, and everyone ahead of me is among them, so the rank holds across all 5,141 who joined.
 
 ![P&L and rank over the competition](figures/fig1_pnl_rank.png)
 

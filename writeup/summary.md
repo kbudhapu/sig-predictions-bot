@@ -2,7 +2,7 @@
 
 > **Provisional (as of 2026-11-22).** House and Senate control are closed but not yet settled. If both settle YES, the final P&L is about **+$9,484**. Numbers marked <!-- UPDATE --> change at settlement.
 
-**Result so far: +$8,849 on a 100,000 start, rank 557 of 1,969 ranked traders (top 28%; top 11% of the 5,141 members).** <!-- UPDATE --> I built and ran an automated trading bot through the whole tournament, with Claude (Anthropic's model, through Claude Code) as my engineering partner.
+**Result so far: +$8,849 on a 100,000 start, rank 557 of 5,141 participants (top 11%).** <!-- UPDATE --> I built and ran an automated trading bot through the whole tournament, with Claude (Anthropic's model, through Claude Code) as my engineering partner.
 
 This is the middle-length version. [README.md](README.md) is the one-page version; [technical.md](technical.md) has everything, including every study, incident and number.
 
