@@ -1,0 +1,15 @@
+# Fire the pre-event readiness check HOURLY across the two election days, pinned to 2026 (a one-off
+# event, not a yearly recurrence). OnCalendar is evaluated in the system timezone → the runbook pins
+# the droplet to UTC (`timedatectl set-timezone UTC`), so these are UTC. The settlement wall is
+# 2026-11-04T17:00Z; firing through the day lets the job no-op itself once the cutoff passes.
+[Unit]
+Description=Run sig-bot pre-event readiness hourly on election days (UTC)
+
+[Timer]
+OnCalendar=2026-11-03 *:00:00
+OnCalendar=2026-11-04 *:00:00
+Persistent=true
+Unit=sig-bot-pre-event.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,24 @@
+# FEED — non-capital market-data ingestion (prices / orderbook / trade tape → shared SQLite).
+# Separate process per the settled model; places NO orders, so it needs no flock or WatchdogSec.
+# After= the trader is a SOFT ordering hint (start after), NOT a hard bind: the feed must keep
+# running / restarting even if the trader is down, so a trader crash never blinds the feed.
+[Unit]
+Description=sig-bot market-data feed (non-capital)
+After=network-online.target sig-bot.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/sig-bot
+EnvironmentFile=-/opt/sig-bot/.env
+ExecStart=/opt/sig-bot/.venv/bin/python /opt/sig-bot/main_sig.py feed
+Restart=always
+RestartSec=5
+KillSignal=SIGINT
+TimeoutStopSec=20
+User=sig
+Group=sig
+SyslogIdentifier=sig-bot-feed
+
+[Install]
+WantedBy=multi-user.target

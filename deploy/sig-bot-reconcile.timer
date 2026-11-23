@@ -1,0 +1,13 @@
+# Fire the periodic reconcile every 15 min (and ~3 min after boot). Persistent so a fire missed
+# while the box was asleep runs on wake. Interval-based (not OnCalendar) → timezone-independent.
+[Unit]
+Description=Run sig-bot state reconcile every 15 minutes
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=15min
+Persistent=true
+Unit=sig-bot-reconcile.service
+
+[Install]
+WantedBy=timers.target

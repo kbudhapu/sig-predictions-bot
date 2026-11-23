@@ -1,0 +1,24 @@
+# HEALTH SIDECAR — the FastAPI /health (+ bearer /status) endpoint (api/main.py), bound to localhost.
+# /health is the unauth liveness probe the external watchdog and the operator poll
+# (deploy/scripts/health_check.sh). Non-capital, imports no orchestrator code → the sidecar being
+# down never affects trading. Separate unit so a sidecar crash is isolated.
+[Unit]
+Description=sig-bot control/health sidecar (FastAPI, localhost)
+After=network-online.target sig-bot.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/sig-bot
+EnvironmentFile=-/opt/sig-bot/.env
+# Bind localhost only; firewall or reverse-proxy if remote access is needed. 1 worker (1-core box).
+ExecStart=/opt/sig-bot/.venv/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8787 --workers 1
+Restart=always
+RestartSec=10
+TimeoutStopSec=15
+User=sig
+Group=sig
+SyslogIdentifier=sig-bot-health
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,13 @@
+# PORTED from mbappe systemd/trading-bot-watchdog.timer — fires the external watchdog ~2 min after boot
+# and every 5 min thereafter, regardless of the bot's state. Persistent so a missed fire runs on wake.
+[Unit]
+Description=Run the sig-bot external dead-man watchdog every 5 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Persistent=true
+Unit=sig-bot-watchdog.service
+
+[Install]
+WantedBy=timers.target

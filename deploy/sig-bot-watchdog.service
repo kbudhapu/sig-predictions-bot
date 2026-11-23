@@ -1,0 +1,13 @@
+# PORTED from mbappe systemd/trading-bot-watchdog.service — the EXTERNAL dead-man (out-of-process).
+# Deliberately does NOT depend on sig-bot.service, so it catches a startup crash that happens before the
+# in-process monitor ever starts. Oneshot fired by the timer.
+[Unit]
+Description=sig-bot external dead-man watchdog (independent heartbeat check)
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/sig-bot
+EnvironmentFile=/opt/sig-bot/.env
+ExecStart=/opt/sig-bot/.venv/bin/python /opt/sig-bot/scripts/external_watchdog.py
+User=sig
+Group=sig

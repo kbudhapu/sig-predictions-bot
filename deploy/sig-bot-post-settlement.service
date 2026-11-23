@@ -1,0 +1,15 @@
+# PERIODIC: post-settlement reconciliation (UTC) — the SIG analogue of mbappe's ET post-close job.
+# Runs AFTER the single 2026-11-04T17:00Z settlement wall: confirm every held position settled to
+# $1/$0 as expected, reconcile final realized PnL vs the venue, flag any market that did not settle
+# cleanly. Oneshot; read/verify only.
+[Unit]
+Description=sig-bot post-settlement reconciliation (after the Nov-4 17:00Z wall)
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/sig-bot
+EnvironmentFile=-/opt/sig-bot/.env
+ExecStart=/opt/sig-bot/deploy/scripts/periodic_job.sh post-settlement
+User=sig
+Group=sig
+SyslogIdentifier=sig-bot-post-settlement

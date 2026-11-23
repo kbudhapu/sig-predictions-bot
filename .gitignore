@@ -1,0 +1,60 @@
+# ─────────────────────────────────────────────────────────────────────────
+# SECRETS — these MUST never enter git history. This repo will be shown
+# publicly; a leaked SIG API key is catastrophic. Default-deny for anything
+# that could carry a credential.
+# ─────────────────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets/
+config/*.local.*
+config/secrets*.yaml
+config/secrets*.yml
+config/secrets*.json
+**/secrets.local.*
+
+# ── State / databases (SQLite source-of-truth, never committed) ──
+*.db
+*.sqlite
+*.sqlite3
+*.db-wal
+*.db-shm
+data/
+
+# ── Logs / runtime ──
+logs/
+*.log
+*.pid
+*.lock
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── OS / editor ──
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+data/fl_shadow/
+
+# ── droplet clutter (2026-10-06 cleanup) ──
+.ssh/
+.cache/
+config/backups/
+config/*.bak*
+config/*.predeploy*
+config/*.prehardening*
+backups/
+recon/at_open_raw_*.json
+
+# write-up download zip
+writeup/*.zip

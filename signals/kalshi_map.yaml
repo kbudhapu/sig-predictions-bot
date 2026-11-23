@@ -1,0 +1,1471 @@
+generated: tools/build_kalshi_map.py
+legs:
+- sig_key: georgia_senate_rep
+  status: matched
+  event: SENATEGA-26
+  ticker: SENATEGA-26-R
+  party: rep
+  candidate: Mike Collins
+  rules: 'If a representative of the Republican party is sworn in as a Senator of Georgia for the term beginning in 2027, then the market resolves to '
+  exchange_id: '948'
+- sig_key: georgia_senate_dem
+  status: matched
+  event: SENATEGA-26
+  ticker: SENATEGA-26-D
+  party: dem
+  candidate: Jon Ossoff
+  rules: 'If a representative of the Democratic party is sworn in as a Senator of Georgia for the term beginning in 2027, then the market resolves to '
+  exchange_id: '947'
+- sig_key: texas_senate_rep
+  status: matched
+  event: SENATETX-26
+  ticker: SENATETX-26-R
+  party: rep
+  candidate: Ken Paxton
+  rules: If a representative of the Republican party is sworn in as a Senator of Texas for the term beginning in 2027, then the market resolves to Ye
+  exchange_id: '983'
+- sig_key: georgia_governor_rep
+  status: matched
+  event: GOVPARTYGA-26
+  ticker: GOVPARTYGA-26-R
+  party: rep
+  candidate: Rick Jackson
+  rules: If a representative of the Republican party is inaugurated as the governor of Georgia pursuant to the 2026 election, then the market resolve
+  exchange_id: '856'
+- sig_key: alabama_governor_rep
+  status: matched
+  event: GOVPARTYAL-26
+  ticker: GOVPARTYAL-26-R
+  party: rep
+  candidate: Tommy Tuberville
+  rules: If a representative of the Republican party is inaugurated as the governor of Alabama pursuant to the 2026 election, then the market resolve
+  exchange_id: '845'
+- sig_key: alabama_governor_dem
+  status: matched
+  event: GOVPARTYAL-26
+  ticker: GOVPARTYAL-26-D
+  party: dem
+  candidate: Doug Jones
+  rules: If a representative of the Democratic party is inaugurated as the governor of Alabama pursuant to the 2026 election, then the market resolve
+  exchange_id: '844'
+- sig_key: arizona_governor_rep
+  status: matched
+  event: GOVPARTYAZ-26
+  ticker: GOVPARTYAZ-26-R
+  party: rep
+  candidate: Andy Biggs
+  rules: If a representative of the Republican party is inaugurated as the governor of Arizona pursuant to the 2026 election, then the market resolve
+  exchange_id: '849'
+- sig_key: arizona_governor_dem
+  status: matched
+  event: GOVPARTYAZ-26
+  ticker: GOVPARTYAZ-26-D
+  party: dem
+  candidate: Katie Hobbs
+  rules: If a representative of the Democratic party is inaugurated as the governor of Arizona pursuant to the 2026 election, then the market resolve
+  exchange_id: '848'
+- sig_key: arkansas_governor_rep
+  status: matched
+  event: GOVPARTYAR-26
+  ticker: GOVPARTYAR-26-R
+  party: rep
+  candidate: Sarah Huckabee Sanders
+  rules: If a representative of the Republican party is inaugurated as the governor of Arkansas pursuant to the 2026 election, then the market resolv
+  exchange_id: '847'
+- sig_key: arkansas_governor_dem
+  status: matched
+  event: GOVPARTYAR-26
+  ticker: GOVPARTYAR-26-D
+  party: dem
+  candidate: Fred Love
+  rules: If a representative of the Democratic party is inaugurated as the governor of Arkansas pursuant to the 2026 election, then the market resolv
+  exchange_id: '846'
+- sig_key: colorado_governor_rep
+  status: matched
+  event: GOVPARTYCO-26
+  ticker: GOVPARTYCO-26-R
+  party: rep
+  candidate: Victor Marx
+  rules: If a representative of the Republican party is inaugurated as the governor of Colorado pursuant to the 2026 election, then the market resolv
+  exchange_id: '853'
+- sig_key: colorado_governor_dem
+  status: matched
+  event: GOVPARTYCO-26
+  ticker: GOVPARTYCO-26-D
+  party: dem
+  candidate: Phil Weiser
+  rules: If a representative of the Democratic party is inaugurated as the governor of Colorado pursuant to the 2026 election, then the market resolv
+  exchange_id: '852'
+- sig_key: connecticut_governor_rep
+  status: matched
+  event: GOVPARTYCT-26
+  ticker: GOVPARTYCT-26-R
+  party: rep
+  candidate: Ryan Fazio
+  rules: If a representative of the Republican party is inaugurated as the governor of Connecticut pursuant to the 2026 election, then the market res
+  exchange_id: '854'
+- sig_key: connecticut_governor_dem
+  status: matched
+  event: GOVPARTYCT-26
+  ticker: GOVPARTYCT-26-D
+  party: dem
+  candidate: Ned Lamont
+  rules: If a representative of the Democratic party is inaugurated as the governor of Connecticut pursuant to the 2026 election, then the market res
+  exchange_id: '987'
+- sig_key: florida_governor_rep
+  status: matched
+  event: GOVPARTYFL-26
+  ticker: GOVPARTYFL-26-R
+  party: rep
+  candidate: Byron Donalds
+  rules: If a representative of the Republican party is inaugurated as the governor of Florida pursuant to the 2026 election, then the market resolve
+  exchange_id: '989'
+- sig_key: florida_governor_dem
+  status: matched
+  event: GOVPARTYFL-26
+  ticker: GOVPARTYFL-26-D
+  party: dem
+  candidate: David Jolly
+  rules: If a representative of the Democratic party is inaugurated as the governor of Florida pursuant to the 2026 election, then the market resolve
+  exchange_id: '988'
+- sig_key: hawaii_governor_rep
+  status: matched
+  event: GOVPARTYHI-26
+  ticker: GOVPARTYHI-26-R
+  party: rep
+  candidate: Gary Cordery
+  rules: If a representative of the Republican party is inaugurated as the governor of Hawaii pursuant to the 2026 election, then the market resolves
+  exchange_id: '991'
+- sig_key: hawaii_governor_dem
+  status: matched
+  event: GOVPARTYHI-26
+  ticker: GOVPARTYHI-26-D
+  party: dem
+  candidate: Josh Green
+  rules: If a representative of the Democratic party is inaugurated as the governor of Hawaii pursuant to the 2026 election, then the market resolves
+  exchange_id: '990'
+- sig_key: idaho_governor_rep
+  status: matched
+  event: GOVPARTYID-26
+  ticker: GOVPARTYID-26-R
+  party: rep
+  candidate: Brad Little
+  rules: 'If a representative of the Republican party is inaugurated as the governor of Idaho pursuant to the 2026 election, then the market resolves '
+  exchange_id: '860'
+- sig_key: idaho_governor_dem
+  status: matched
+  event: GOVPARTYID-26
+  ticker: GOVPARTYID-26-D
+  party: dem
+  candidate: Terri Pickens
+  rules: 'If a representative of the Democratic party is inaugurated as the governor of Idaho pursuant to the 2026 election, then the market resolves '
+  exchange_id: '859'
+- sig_key: illinois_governor_rep
+  status: matched
+  event: GOVPARTYIL-26
+  ticker: GOVPARTYIL-26-R
+  party: rep
+  candidate: Darren Bailey
+  rules: If a representative of the Republican party is inaugurated as the governor of Illinois pursuant to the 2026 election, then the market resolv
+  exchange_id: '862'
+- sig_key: illinois_governor_dem
+  status: matched
+  event: GOVPARTYIL-26
+  ticker: GOVPARTYIL-26-D
+  party: dem
+  candidate: JB Pritzker
+  rules: If a representative of the Democratic party is inaugurated as the governor of Illinois pursuant to the 2026 election, then the market resolv
+  exchange_id: '861'
+- sig_key: iowa_governor_rep
+  status: matched
+  event: GOVPARTYIA-26
+  ticker: GOVPARTYIA-26-R
+  party: rep
+  candidate: Zach Lahn
+  rules: If a representative of the Republican party is inaugurated as the governor of Iowa pursuant to the 2026 election, then the market resolves t
+  exchange_id: '858'
+- sig_key: iowa_governor_dem
+  status: matched
+  event: GOVPARTYIA-26
+  ticker: GOVPARTYIA-26-D
+  party: dem
+  candidate: Rob Sand
+  rules: If a representative of the Democratic party is inaugurated as the governor of Iowa pursuant to the 2026 election, then the market resolves t
+  exchange_id: '857'
+- sig_key: maine_governor_rep
+  status: matched
+  event: GOVPARTYME-26
+  ticker: GOVPARTYME-26-R
+  party: rep
+  candidate: Robert Charles
+  rules: 'If a representative of the Republican party is inaugurated as the governor of Maine pursuant to the 2026 election, then the market resolves '
+  exchange_id: '866'
+- sig_key: maine_governor_dem
+  status: matched
+  event: GOVPARTYME-26
+  ticker: GOVPARTYME-26-D
+  party: dem
+  candidate: Hannah Pingree
+  rules: 'If a representative of the Democratic party is inaugurated as the governor of Maine pursuant to the 2026 election, then the market resolves '
+  exchange_id: '865'
+- sig_key: maryland_governor_rep
+  status: matched
+  event: GOVPARTYMD-26
+  ticker: GOVPARTYMD-26-R
+  party: rep
+  candidate: Dan Cox
+  rules: If a representative of the Republican party is inaugurated as the governor of Maryland pursuant to the 2026 election, then the market resolv
+  exchange_id: '864'
+- sig_key: maryland_governor_dem
+  status: matched
+  event: GOVPARTYMD-26
+  ticker: GOVPARTYMD-26-D
+  party: dem
+  candidate: Wes Moore
+  rules: If a representative of the Democratic party is inaugurated as the governor of Maryland pursuant to the 2026 election, then the market resolv
+  exchange_id: '863'
+- sig_key: massachusetts_governor_rep
+  status: matched
+  event: GOVPARTYMA-26
+  ticker: GOVPARTYMA-26-R
+  party: rep
+  candidate: Mike Minogue
+  rules: If a representative of the Republican party is inaugurated as the governor of Massachusetts pursuant to the 2026 election, then the market r
+  exchange_id: '1060'
+- sig_key: massachusetts_governor_dem
+  status: matched
+  event: GOVPARTYMA-26
+  ticker: GOVPARTYMA-26-D
+  party: dem
+  candidate: Maura Healey
+  rules: If a representative of the Democratic party is inaugurated as the governor of Massachusetts pursuant to the 2026 election, then the market r
+  exchange_id: '1059'
+- sig_key: michigan_governor_rep
+  status: matched
+  event: GOVPARTYMI-26
+  ticker: GOVPARTYMI-26-R
+  party: rep
+  candidate: John James
+  rules: If a representative of the Republican party is inaugurated as the governor of Michigan pursuant to the 2026 election, then the market resolv
+  exchange_id: '995'
+- sig_key: michigan_governor_dem
+  status: matched
+  event: GOVPARTYMI-26
+  ticker: GOVPARTYMI-26-D
+  party: dem
+  candidate: Jocelyn Benson
+  rules: If a representative of the Democratic party is inaugurated as the governor of Michigan pursuant to the 2026 election, then the market resolv
+  exchange_id: '994'
+- sig_key: minnesota_governor_rep
+  status: matched
+  event: GOVPARTYMN-26
+  ticker: GOVPARTYMN-26-R
+  party: rep
+  candidate: Lisa Demuth
+  rules: If a representative of the Republican party is inaugurated as the governor of Minnesota pursuant to the 2026 election, then the market resol
+  exchange_id: '997'
+- sig_key: minnesota_governor_dem
+  status: matched
+  event: GOVPARTYMN-26
+  ticker: GOVPARTYMN-26-D
+  party: dem
+  candidate: Amy Klobuchar
+  rules: If a representative of the Democratic party is inaugurated as the governor of Minnesota pursuant to the 2026 election, then the market resol
+  exchange_id: '996'
+- sig_key: nebraska_governor_rep
+  status: matched
+  event: GOVPARTYNE-26
+  ticker: GOVPARTYNE-26-R
+  party: rep
+  candidate: Jim Pillen
+  rules: If a representative of the Republican party is inaugurated as the governor of Nebraska pursuant to the 2026 election, then the market resolv
+  exchange_id: '868'
+- sig_key: nebraska_governor_dem
+  status: matched
+  event: GOVPARTYNE-26
+  ticker: GOVPARTYNE-26-D
+  party: dem
+  candidate: Lynne Walz
+  rules: If a representative of the Democratic party is inaugurated as the governor of Nebraska pursuant to the 2026 election, then the market resolv
+  exchange_id: '867'
+- sig_key: nevada_governor_rep
+  status: matched
+  event: GOVPARTYNV-26
+  ticker: GOVPARTYNV-26-R
+  party: rep
+  candidate: Joe Lombardo
+  rules: If a representative of the Republican party is inaugurated as the governor of Nevada pursuant to the 2026 election, then the market resolves
+  exchange_id: '872'
+- sig_key: nevada_governor_dem
+  status: matched
+  event: GOVPARTYNV-26
+  ticker: GOVPARTYNV-26-D
+  party: dem
+  candidate: Aaron Ford
+  rules: If a representative of the Democratic party is inaugurated as the governor of Nevada pursuant to the 2026 election, then the market resolves
+  exchange_id: '871'
+- sig_key: new_mexico_governor_rep
+  status: matched
+  event: GOVPARTYNM-26
+  ticker: GOVPARTYNM-26-R
+  party: rep
+  candidate: Greggory D. Hull
+  rules: If a representative of the Republican party is inaugurated as the governor of New Mexico pursuant to the 2026 election, then the market reso
+  exchange_id: '870'
+- sig_key: new_mexico_governor_dem
+  status: matched
+  event: GOVPARTYNM-26
+  ticker: GOVPARTYNM-26-D
+  party: dem
+  candidate: Deb Haaland
+  rules: If a representative of the Democratic party is inaugurated as the governor of New Mexico pursuant to the 2026 election, then the market reso
+  exchange_id: '869'
+- sig_key: new_york_governor_rep
+  status: matched
+  event: GOVPARTYNY-26
+  ticker: GOVPARTYNY-26-R
+  party: rep
+  candidate: Bruce Blakeman
+  rules: If a representative of the Republican party is inaugurated as the governor of New York pursuant to the 2026 election, then the market resolv
+  exchange_id: '874'
+- sig_key: new_york_governor_dem
+  status: matched
+  event: GOVPARTYNY-26
+  ticker: GOVPARTYNY-26-D
+  party: dem
+  candidate: Kathy Hochul
+  rules: If a representative of the Democratic party is inaugurated as the governor of New York pursuant to the 2026 election, then the market resolv
+  exchange_id: '873'
+- sig_key: oklahoma_governor_rep
+  status: matched
+  event: GOVPARTYOK-26
+  ticker: GOVPARTYOK-26-R
+  party: rep
+  candidate: Mike Mazzei
+  rules: If a representative of the Republican party is inaugurated as the governor of Oklahoma pursuant to the 2026 election, then the market resolv
+  exchange_id: '1063'
+- sig_key: oklahoma_governor_dem
+  status: matched
+  event: GOVPARTYOK-26
+  ticker: GOVPARTYOK-26-D
+  party: dem
+  candidate: Cyndi Munson
+  rules: If a representative of the Democratic party is inaugurated as the governor of Oklahoma pursuant to the 2026 election, then the market resolv
+  exchange_id: '875'
+- sig_key: oregon_governor_rep
+  status: matched
+  event: GOVPARTYOR-26
+  ticker: GOVPARTYOR-26-R
+  party: rep
+  candidate: Christine Drazan
+  rules: If a representative of the Republican party is inaugurated as the governor of Oregon pursuant to the 2026 election, then the market resolves
+  exchange_id: '877'
+- sig_key: oregon_governor_dem
+  status: matched
+  event: GOVPARTYOR-26
+  ticker: GOVPARTYOR-26-D
+  party: dem
+  candidate: Tina Kotek
+  rules: If a representative of the Democratic party is inaugurated as the governor of Oregon pursuant to the 2026 election, then the market resolves
+  exchange_id: '876'
+- sig_key: pennsylvania_governor_rep
+  status: matched
+  event: GOVPARTYPA-26
+  ticker: GOVPARTYPA-26-R
+  party: rep
+  candidate: Stacy Garrity
+  rules: If a representative of the Republican party is inaugurated as the governor of Pennsylvania pursuant to the 2026 election, then the market re
+  exchange_id: '879'
+- sig_key: pennsylvania_governor_dem
+  status: matched
+  event: GOVPARTYPA-26
+  ticker: GOVPARTYPA-26-D
+  party: dem
+  candidate: Josh Shapiro
+  rules: If a representative of the Democratic party is inaugurated as the governor of Pennsylvania pursuant to the 2026 election, then the market re
+  exchange_id: '878'
+- sig_key: georgia_governor_dem
+  status: matched
+  event: GOVPARTYGA-26
+  ticker: GOVPARTYGA-26-D
+  party: dem
+  candidate: Keisha Lance Bottoms
+  rules: If a representative of the Democratic party is inaugurated as the governor of Georgia pursuant to the 2026 election, then the market resolve
+  exchange_id: '855'
+- sig_key: south_dakota_governor_rep
+  status: matched
+  event: GOVPARTYSD-26
+  ticker: GOVPARTYSD-26-R
+  party: rep
+  candidate: Larry Rhoden
+  rules: If a representative of the Republican party is inaugurated as the governor of South Dakota pursuant to the 2026 election, then the market re
+  exchange_id: '998'
+- sig_key: south_dakota_governor_dem
+  status: matched
+  event: GOVPARTYSD-26
+  ticker: GOVPARTYSD-26-D
+  party: dem
+  candidate: Dan Ahlers
+  rules: If a representative of the Democratic party is inaugurated as the governor of South Dakota pursuant to the 2026 election, then the market re
+  exchange_id: '883'
+- sig_key: tennessee_governor_rep
+  status: matched
+  event: GOVPARTYTN-26
+  ticker: GOVPARTYTN-26-R
+  party: rep
+  candidate: Marsha Blackburn
+  rules: If a representative of the Republican party is inaugurated as the governor of Tennessee pursuant to the 2026 election, then the market resol
+  exchange_id: '1000'
+- sig_key: tennessee_governor_dem
+  status: matched
+  event: GOVPARTYTN-26
+  ticker: GOVPARTYTN-26-D
+  party: dem
+  candidate: Jerri Green
+  rules: If a representative of the Democratic party is inaugurated as the governor of Tennessee pursuant to the 2026 election, then the market resol
+  exchange_id: '999'
+- sig_key: texas_governor_rep
+  status: matched
+  event: GOVPARTYTX-26
+  ticker: GOVPARTYTX-26-R
+  party: rep
+  candidate: Greg Abbott
+  rules: 'If a representative of the Republican party is inaugurated as the governor of Texas pursuant to the 2026 election, then the market resolves '
+  exchange_id: '885'
+- sig_key: texas_governor_dem
+  status: matched
+  event: GOVPARTYTX-26
+  ticker: GOVPARTYTX-26-D
+  party: dem
+  candidate: Gina Hinojosa
+  rules: 'If a representative of the Democratic party is inaugurated as the governor of Texas pursuant to the 2026 election, then the market resolves '
+  exchange_id: '884'
+- sig_key: vermont_governor_rep
+  status: matched
+  event: GOVPARTYVT-26
+  ticker: GOVPARTYVT-26-R
+  party: rep
+  candidate: Phil Scott
+  rules: If a representative of the Republican party is inaugurated as the governor of Vermont pursuant to the 2026 election, then the market resolve
+  exchange_id: '1002'
+- sig_key: vermont_governor_dem
+  status: matched
+  event: GOVPARTYVT-26
+  ticker: GOVPARTYVT-26-D
+  party: dem
+  candidate: Amanda Janoo
+  rules: If a representative of the Democratic party is inaugurated as the governor of Vermont pursuant to the 2026 election, then the market resolve
+  exchange_id: '1001'
+- sig_key: wisconsin_governor_rep
+  status: matched
+  event: GOVPARTYWI-26
+  ticker: GOVPARTYWI-26-R
+  party: rep
+  candidate: Tom Tiffany
+  rules: If a representative of the Republican party is inaugurated as the governor of Wisconsin pursuant to the 2026 election, then the market resol
+  exchange_id: '1004'
+- sig_key: wisconsin_governor_dem
+  status: matched
+  event: GOVPARTYWI-26
+  ticker: GOVPARTYWI-26-D
+  party: dem
+  candidate: David Crowley
+  rules: If a representative of the Democratic party is inaugurated as the governor of Wisconsin pursuant to the 2026 election, then the market resol
+  exchange_id: '1003'
+- sig_key: mn_05_house_rep
+  status: matched
+  event: KXHOUSERACE-MN05-26
+  ticker: KXHOUSERACE-MN05-26-R
+  party: rep
+  candidate: John Nagel
+  rules: If the House member sworn in for MN-05 for the term beginning in 2027 is a member of the Republican party, then the market resolves to Yes.
+  exchange_id: '1028'
+- sig_key: mn_05_house_dem
+  status: matched
+  event: KXHOUSERACE-MN05-26
+  ticker: KXHOUSERACE-MN05-26-D
+  party: dem
+  candidate: Ilhan Omar
+  rules: If the House member sworn in for MN-05 for the term beginning in 2027 is a member of the Democratic party, then the market resolves to Yes.
+  exchange_id: '1027'
+- sig_key: sc_01_house_rep
+  status: matched
+  event: KXHOUSERACE-SC01-26
+  ticker: KXHOUSERACE-SC01-26-R
+  party: rep
+  candidate: Jenny Costa Honeycutt
+  rules: If the House member sworn in for SC-01 for the term beginning in 2027 is a member of the Republican Party, then the market resolves to Yes.
+  exchange_id: '931'
+- sig_key: sc_01_house_dem
+  status: matched
+  event: KXHOUSERACE-SC01-26
+  ticker: KXHOUSERACE-SC01-26-D
+  party: dem
+  candidate: Nancy S. Lacore
+  rules: If the House member sworn in for SC-01 for the term beginning in 2027 is a member of the Democratic Party, then the market resolves to Yes.
+  exchange_id: '930'
+- sig_key: arkansas_senate_rep
+  status: matched
+  event: SENATEAR-26
+  ticker: SENATEAR-26-R
+  party: rep
+  candidate: Tom Cotton
+  rules: If a representative of the Republican party is sworn in as a Senator of Arkansas for the term beginning in 2027, then the market resolves to
+  exchange_id: '944'
+- sig_key: arkansas_senate_dem
+  status: matched
+  event: SENATEAR-26
+  ticker: SENATEAR-26-D
+  party: dem
+  candidate: Hallie Shoffner
+  rules: If a representative of the Democratic party is sworn in as a Senator of Arkansas for the term beginning in 2027, then the market resolves to
+  exchange_id: '943'
+- sig_key: delaware_senate_rep
+  status: matched
+  event: SENATEDE-26
+  ticker: SENATEDE-26-R
+  party: rep
+  candidate: Republican party
+  rules: If a representative of the Republican party is sworn in as a Senator of Delaware for the term beginning in 2027, then the market resolves to
+  exchange_id: '1075'
+- sig_key: delaware_senate_dem
+  status: matched
+  event: SENATEDE-26
+  ticker: SENATEDE-26-D
+  party: dem
+  candidate: Democratic party
+  rules: If a representative of the Democratic party is sworn in as a Senator of Delaware for the term beginning in 2027, then the market resolves to
+  exchange_id: '1042'
+- sig_key: florida_senate_rep
+  status: matched
+  event: SENATEFLS-26
+  ticker: SENATEFLS-26-R
+  party: rep
+  candidate: Ashley Moody
+  rules: 'If a representative of the Republican party is sworn in as a Senator of Florida for the term beginning in 2027, then the market resolves to '
+  exchange_id: '1044'
+- sig_key: florida_senate_dem
+  status: matched
+  event: SENATEFLS-26
+  ticker: SENATEFLS-26-D
+  party: dem
+  candidate: Angie Nixon
+  rules: 'If a representative of the Democratic party is sworn in as a Senator of Florida for the term beginning in 2027, then the market resolves to '
+  exchange_id: '1043'
+- sig_key: idaho_senate_rep
+  status: matched
+  event: SENATEID-26
+  ticker: SENATEID-26-R
+  party: rep
+  candidate: Jim Risch
+  rules: If a representative of the Republican party is sworn in as a Senator of Idaho for the term beginning in 2027, then the market resolves to Ye
+  exchange_id: '952'
+- sig_key: idaho_senate_dem
+  status: matched
+  event: SENATEID-26
+  ticker: SENATEID-26-D
+  party: dem
+  candidate: David Roth
+  rules: If a representative of the Democratic party is sworn in as a Senator of Idaho for the term beginning in 2027, then the market resolves to Ye
+  exchange_id: '951'
+- sig_key: illinois_senate_rep
+  status: matched
+  event: SENATEIL-26
+  ticker: SENATEIL-26-R
+  party: rep
+  candidate: Don Tracy
+  rules: If a representative of the Republican party is sworn in as a Senator of Illinois for the term beginning in 2027, then the market resolves to
+  exchange_id: '954'
+- sig_key: illinois_senate_dem
+  status: matched
+  event: SENATEIL-26
+  ticker: SENATEIL-26-D
+  party: dem
+  candidate: Juliana Stratton
+  rules: If a representative of the Democratic party is sworn in as a Senator of Illinois for the term beginning in 2027, then the market resolves to
+  exchange_id: '953'
+- sig_key: iowa_senate_rep
+  status: matched
+  event: SENATEIA-26
+  ticker: SENATEIA-26-R
+  party: rep
+  candidate: Ashley Hinson
+  rules: If a representative of the Republican party is sworn in as a Senator of Iowa for the term beginning in 2027, then the market resolves to Yes
+  exchange_id: '950'
+- sig_key: iowa_senate_dem
+  status: matched
+  event: SENATEIA-26
+  ticker: SENATEIA-26-D
+  party: dem
+  candidate: Josh Turek
+  rules: If a representative of the Democratic party is sworn in as a Senator of Iowa for the term beginning in 2027, then the market resolves to Yes
+  exchange_id: '949'
+- sig_key: kansas_senate_rep
+  status: matched
+  event: SENATEKS-26
+  ticker: SENATEKS-26-R
+  party: rep
+  candidate: Roger Marshall
+  rules: If a representative of the Republican party is sworn in as a Senator of Kansas for the term beginning in 2027, then the market resolves to Y
+  exchange_id: '1046'
+- sig_key: kansas_senate_dem
+  status: matched
+  event: SENATEKS-26
+  ticker: SENATEKS-26-D
+  party: dem
+  candidate: Adam Hamilton
+  rules: If a representative of the Democratic party is sworn in as a Senator of Kansas for the term beginning in 2027, then the market resolves to Y
+  exchange_id: '1045'
+- sig_key: louisiana_senate_rep
+  status: matched
+  event: SENATELA-26
+  ticker: SENATELA-26-R
+  party: rep
+  candidate: Andy Barr
+  rules: If a representative of the Republican party is sworn in as a Senator of Kentucky for the term beginning in 2027, then the market resolves to
+  exchange_id: '958'
+- sig_key: louisiana_senate_dem
+  status: matched
+  event: SENATELA-26
+  ticker: SENATELA-26-D
+  party: dem
+  candidate: Charles Booker
+  rules: If a representative of the Democratic party is sworn in as a Senator of Kentucky for the term beginning in 2027, then the market resolves to
+  exchange_id: '957'
+- sig_key: maine_senate_rep
+  status: matched
+  event: SENATEME-26
+  ticker: SENATEME-26-R
+  party: rep
+  candidate: Susan Collins
+  rules: If a representative of the Republican party is sworn in as a Senator of Maine for the term beginning in 2027, then the market resolves to Ye
+  exchange_id: '960'
+- sig_key: maine_senate_dem
+  status: matched
+  event: SENATEME-26
+  ticker: SENATEME-26-D
+  party: dem
+  candidate: Troy Jackson
+  rules: If a representative of the Democratic party is sworn in as a Senator of Maine for the term beginning in 2027, then the market resolves to Ye
+  exchange_id: '959'
+- sig_key: massachusetts_senate_rep
+  status: matched
+  event: SENATEMA-26
+  ticker: SENATEMA-26-R
+  party: rep
+  candidate: John Deaton
+  rules: If a representative of the Republican party is sworn in as a Senator of Massachusetts for the term beginning in 2027, then the market resolv
+  exchange_id: '1069'
+- sig_key: massachusetts_senate_dem
+  status: matched
+  event: SENATEMA-26
+  ticker: SENATEMA-26-D
+  party: dem
+  candidate: Ed Markey
+  rules: If a representative of the Democratic party is sworn in as a Senator of Massachusetts for the term beginning in 2027, then the market resolv
+  exchange_id: '1068'
+- sig_key: michigan_senate_rep
+  status: matched
+  event: SENATEMI-26
+  ticker: SENATEMI-26-R
+  party: rep
+  candidate: Mike Rogers
+  rules: If a representative of the Republican party is sworn in as a Senator of Michigan for the term beginning in 2027, then the market resolves to
+  exchange_id: '1048'
+- sig_key: michigan_senate_dem
+  status: matched
+  event: SENATEMI-26
+  ticker: SENATEMI-26-D
+  party: dem
+  candidate: Abdul El-Sayed
+  rules: If a representative of the Democratic party is sworn in as a Senator of Michigan for the term beginning in 2027, then the market resolves to
+  exchange_id: '1047'
+- sig_key: minnesota_senate_rep
+  status: matched
+  event: SENATEMN-26
+  ticker: SENATEMN-26-R
+  party: rep
+  candidate: Michele Tafoya
+  rules: If a representative of the Republican party is sworn in as a Senator of Minnesota for the term beginning in 2027, then the market resolves t
+  exchange_id: '1050'
+- sig_key: mississippi_senate_rep
+  status: matched
+  event: SENATEMS-26
+  ticker: SENATEMS-26-R
+  party: rep
+  candidate: Cindy Hyde-Smith
+  rules: If a representative of the Republican party is sworn in as a Senator of Mississippi for the term beginning in 2027, then the market resolves
+  exchange_id: '962'
+- sig_key: mississippi_senate_dem
+  status: matched
+  event: SENATEMS-26
+  ticker: SENATEMS-26-D
+  party: dem
+  candidate: Scott Colom
+  rules: If a representative of the Democratic party is sworn in as a Senator of Mississippi for the term beginning in 2027, then the market resolves
+  exchange_id: '961'
+- sig_key: montana_senate_rep
+  status: matched
+  event: SENATEMT-26
+  ticker: SENATEMT-26-R
+  party: rep
+  candidate: Kurt Alme
+  rules: 'If a representative of the Republican party is sworn in as a Senator of Montana for the term beginning in 2027, then the market resolves to '
+  exchange_id: '964'
+- sig_key: montana_senate_dem
+  status: matched
+  event: SENATEMT-26
+  ticker: SENATEMT-26-D
+  party: dem
+  candidate: Alani Bankhead
+  rules: 'If a representative of the Democratic party is sworn in as a Senator of Montana for the term beginning in 2027, then the market resolves to '
+  exchange_id: '963'
+- sig_key: new_hampshire_senate_rep
+  status: matched
+  event: SENATENH-26
+  ticker: SENATENH-26-R
+  party: rep
+  candidate: John E. Sununu
+  rules: If a representative of the Republican party is sworn in as a Senator of New Hampshire for the term beginning in 2027, then the market resolv
+  exchange_id: '1071'
+- sig_key: new_hampshire_senate_dem
+  status: matched
+  event: SENATENH-26
+  ticker: SENATENH-26-D
+  party: dem
+  candidate: Chris Pappas
+  rules: If a representative of the Democratic party is sworn in as a Senator of New Hampshire for the term beginning in 2027, then the market resolv
+  exchange_id: '1070'
+- sig_key: new_jersey_senate_rep
+  status: matched
+  event: SENATENJ-26
+  ticker: SENATENJ-26-R
+  party: rep
+  candidate: Justin Murphy
+  rules: 'If a representative of the Republican party is sworn in as a Senator of New Jersey for the term beginning in 2027, then the market resolves '
+  exchange_id: '972'
+- sig_key: new_jersey_senate_dem
+  status: matched
+  event: SENATENJ-26
+  ticker: SENATENJ-26-D
+  party: dem
+  candidate: Cory Booker
+  rules: 'If a representative of the Democratic party is sworn in as a Senator of New Jersey for the term beginning in 2027, then the market resolves '
+  exchange_id: '971'
+- sig_key: new_mexico_senate_rep
+  status: matched
+  event: SENATENM-26
+  ticker: SENATENM-26-R
+  party: rep
+  candidate: Larry E. Marker
+  rules: 'If a representative of the Republican party is sworn in as a Senator of New Mexico for the term beginning in 2027, then the market resolves '
+  exchange_id: '974'
+- sig_key: new_mexico_senate_dem
+  status: matched
+  event: SENATENM-26
+  ticker: SENATENM-26-D
+  party: dem
+  candidate: "Ben Ray Luj\xE1n"
+  rules: 'If a representative of the Democratic party is sworn in as a Senator of New Mexico for the term beginning in 2027, then the market resolves '
+  exchange_id: '973'
+- sig_key: north_carolina_senate_rep
+  status: matched
+  event: SENATENC-26
+  ticker: SENATENC-26-R
+  party: rep
+  candidate: Michael Whatley
+  rules: If a representative of the Republican party is sworn in as a Senator of North Carolina for the term beginning in 2027, then the market resol
+  exchange_id: '967'
+- sig_key: north_carolina_senate_dem
+  status: matched
+  event: SENATENC-26
+  ticker: SENATENC-26-D
+  party: dem
+  candidate: Roy Cooper
+  rules: If a representative of the Democratic party is sworn in as a Senator of North Carolina for the term beginning in 2027, then the market resol
+  exchange_id: '966'
+- sig_key: oregon_senate_rep
+  status: matched
+  event: SENATEOR-26
+  ticker: SENATEOR-26-R
+  party: rep
+  candidate: David Brock Smith
+  rules: If a representative of the Republican party is sworn in as a Senator of Oregon for the term beginning in 2027, then the market resolves to Y
+  exchange_id: '977'
+- sig_key: oregon_senate_dem
+  status: matched
+  event: SENATEOR-26
+  ticker: SENATEOR-26-D
+  party: dem
+  candidate: Jeff Merkley
+  rules: If a representative of the Democratic party is sworn in as a Senator of Oregon for the term beginning in 2027, then the market resolves to Y
+  exchange_id: '976'
+- sig_key: south_carolina_senate_rep
+  status: matched
+  event: SENATESC-26
+  ticker: SENATESC-26-R
+  party: rep
+  candidate: Darline Graham
+  rules: If a representative of the Republican party is sworn in as a Senator of South Carolina for the term beginning in 2027, then the market resol
+  exchange_id: '979'
+- sig_key: south_carolina_senate_dem
+  status: matched
+  event: SENATESC-26
+  ticker: SENATESC-26-D
+  party: dem
+  candidate: Annie Andrews
+  rules: If a representative of the Democratic party is sworn in as a Senator of South Carolina for the term beginning in 2027, then the market resol
+  exchange_id: '978'
+- sig_key: tennessee_senate_rep
+  status: matched
+  event: SENATETN-26
+  ticker: SENATETN-26-R
+  party: rep
+  candidate: Bill Hagerty
+  rules: If a representative of the Republican party is sworn in as a Senator of Tennessee for the term beginning in 2027, then the market resolves t
+  exchange_id: '1052'
+- sig_key: tennessee_senate_dem
+  status: matched
+  event: SENATETN-26
+  ticker: SENATETN-26-D
+  party: dem
+  candidate: Marquita Bradshaw
+  rules: If a representative of the Democratic party is sworn in as a Senator of Tennessee for the term beginning in 2027, then the market resolves t
+  exchange_id: '1051'
+- sig_key: texas_senate_dem
+  status: matched
+  event: SENATETX-26
+  ticker: SENATETX-26-D
+  party: dem
+  candidate: James Talarico
+  rules: If a representative of the Democratic party is sworn in as a Senator of Texas for the term beginning in 2027, then the market resolves to Ye
+  exchange_id: '982'
+- sig_key: virginia_senate_rep
+  status: matched
+  event: SENATEVA-26
+  ticker: SENATEVA-26-R
+  party: rep
+  candidate: Bert Mizusawa
+  rules: If a representative of the Republican party is sworn in as a Senator of Virginia for the term beginning in 2027, then the market resolves to
+  exchange_id: '1053'
+- sig_key: virginia_senate_dem
+  status: matched
+  event: SENATEVA-26
+  ticker: SENATEVA-26-D
+  party: dem
+  candidate: Mark Warner
+  rules: If a representative of the Democratic party is sworn in as a Senator of Virginia for the term beginning in 2027, then the market resolves to
+  exchange_id: '984'
+- sig_key: al_02_house_rep
+  status: matched
+  event: KXHOUSERACE-AL02-26
+  ticker: KXHOUSERACE-AL02-26-R
+  party: rep
+  candidate: Rhett Marques
+  rules: If the House member sworn in for AL-02 for the term beginning in 2027 is a member of the Republican Party, then the market resolves to Yes.
+  exchange_id: '1008'
+- sig_key: al_02_house_dem
+  status: matched
+  event: KXHOUSERACE-AL02-26
+  ticker: KXHOUSERACE-AL02-26-D
+  party: dem
+  candidate: Shomari Figures
+  rules: If the House member sworn in for AL-02 for the term beginning in 2027 is a member of the Democratic Party, then the market resolves to Yes.
+  exchange_id: '1007'
+- sig_key: alabama_senate_dem
+  status: matched
+  event: SENATEAL-26
+  ticker: SENATEAL-26-D
+  party: dem
+  candidate: Everett Wess
+  rules: 'If a representative of the Democratic party is sworn in as a Senator of Alabama for the term beginning in 2027, then the market resolves to '
+  exchange_id: '941'
+- sig_key: alabama_senate_rep
+  status: matched
+  event: SENATEAL-26
+  ticker: SENATEAL-26-R
+  party: rep
+  candidate: Barry Moore
+  rules: 'If a representative of the Republican party is sworn in as a Senator of Alabama for the term beginning in 2027, then the market resolves to '
+  exchange_id: '942'
+- sig_key: ca_48_house_rep
+  status: matched
+  event: KXHOUSERACE-CA48-26
+  ticker: KXHOUSERACE-CA48-26-R
+  party: rep
+  candidate: Jim Desmond
+  rules: If the House member sworn in for CA-48 for the term beginning in 2027 is a member of the Republican Party, then the market resolves to Yes.
+  exchange_id: '893'
+- sig_key: ca_48_house_dem
+  status: matched
+  event: KXHOUSERACE-CA48-26
+  ticker: KXHOUSERACE-CA48-26-D
+  party: dem
+  candidate: Marni von Wilpert
+  rules: If the House member sworn in for CA-48 for the term beginning in 2027 is a member of the Democratic Party, then the market resolves to Yes.
+  exchange_id: '892'
+- sig_key: co_04_house_rep
+  status: matched
+  event: KXHOUSERACE-CO04-26
+  ticker: KXHOUSERACE-CO04-26-R
+  party: rep
+  candidate: Lauren Boebert
+  rules: If the House member sworn in for CO-04 for the term beginning in 2027 is a member of the Republican Party, then the market resolves to Yes.
+  exchange_id: '897'
+- sig_key: co_04_house_dem
+  status: matched
+  event: KXHOUSERACE-CO04-26
+  ticker: KXHOUSERACE-CO04-26-D
+  party: dem
+  candidate: Eileen Laubacher
+  rules: If the House member sworn in for CO-04 for the term beginning in 2027 is a member of the Democratic Party, then the market resolves to Yes.
+  exchange_id: '896'
+- sig_key: colorado_senate_dem
+  status: matched
+  event: SENATECO-26
+  ticker: SENATECO-26-D
+  party: dem
+  candidate: John Hickenlooper
+  rules: If a representative of the Democratic party is sworn in as a Senator of Colorado for the term beginning in 2027, then the market resolves to
+  exchange_id: '945'
+- sig_key: colorado_senate_rep
+  status: matched
+  event: SENATECO-26
+  ticker: SENATECO-26-R
+  party: rep
+  candidate: Mark Baisley
+  rules: If a representative of the Republican party is sworn in as a Senator of Colorado for the term beginning in 2027, then the market resolves to
+  exchange_id: '946'
+- sig_key: fl_07_house_rep
+  status: matched
+  event: KXHOUSERACE-FL07-26
+  ticker: KXHOUSERACE-FL07-26-R
+  party: rep
+  candidate: Ryan Elijah
+  rules: If the House member sworn in for FL-07 for the term beginning in 2027 is a member of the Republican Party, then the market resolves to Yes.
+  exchange_id: '1010'
+- sig_key: fl_07_house_dem
+  status: matched
+  event: KXHOUSERACE-FL07-26
+  ticker: KXHOUSERACE-FL07-26-D
+  party: dem
+  candidate: Bale Dalton
+  rules: If the House member sworn in for FL-07 for the term beginning in 2027 is a member of the Democratic Party, then the market resolves to Yes.
+  exchange_id: '1009'
+- sig_key: fl_09_house_rep
+  status: matched
+  event: KXHOUSERACE-FL09-26
+  ticker: KXHOUSERACE-FL09-26-R
+  party: rep
+  candidate: Dan Green
+  rules: If the House member sworn in for FL-09 for the term beginning in 2027 is a member of the Republican Party, then the market resolves to Yes.
+  exchange_id: '1011'
+- sig_key: fl_09_house_dem
+  status: matched
+  event: KXHOUSERACE-FL09-26
+  ticker: KXHOUSERACE-FL09-26-D
+  party: dem
+  candidate: Darren Soto
+  rules: If the House member sworn in for FL-09 for the term beginning in 2027 is a member of the Democratic Party, then the market resolves to Yes.
+  exchange_id: '900'
+- sig_key: fl_16_house_rep
+  status: matched
+  event: KXHOUSERACE-FL16-26
+  ticker: KXHOUSERACE-FL16-26-R
+  party: rep
+  candidate: Sydney Gruters
+  rules: If the House member sworn in for FL-16 for the term beginning in 2027 is a member of the Republican Party, then the market resolves to Yes.
+  exchange_id: '1014'
+- sig_key: fl_16_house_dem
+  status: matched
+  event: KXHOUSERACE-FL16-26
+  ticker: KXHOUSERACE-FL16-26-D
+  party: dem
+  candidate: Kelly Kirschner
+  rules: If the House member sworn in for FL-16 for the term beginning in 2027 is a member of the Democratic Party, then the market resolves to Yes.
+  exchange_id: '1013'
+- sig_key: fl_20_house_rep
+  status: matched
+  event: KXHOUSERACE-FL20-26
+  ticker: KXHOUSERACE-FL20-26-R
+  party: rep
+  candidate: Brent Andersen
+  rules: If the House member sworn in for FL-20 for the term beginning in 2027 is a member of the Republican Party, then the market resolves to Yes.
+  exchange_id: '1016'
+- sig_key: fl_20_house_dem
+  status: matched
+  event: KXHOUSERACE-FL20-26
+  ticker: KXHOUSERACE-FL20-26-D
+  party: dem
+  candidate: Debbie Wasserman Schultz
+  rules: If the House member sworn in for FL-20 for the term beginning in 2027 is a member of the Democratic Party, then the market resolves to Yes.
+  exchange_id: '1015'
+- sig_key: fl_22_house_rep
+  status: matched
+  event: KXHOUSERACE-FL22-26
+  ticker: KXHOUSERACE-FL22-26-R
+  party: rep
+  candidate: Casey Askar
+  rules: If the House member sworn in for FL-22 for the term beginning in 2027 is a member of the Republican Party, then the market resolves to Yes.
+  exchange_id: '1018'
+- sig_key: fl_22_house_dem
+  status: matched
+  event: KXHOUSERACE-FL22-26
+  ticker: KXHOUSERACE-FL22-26-D
+  party: dem
+  candidate: Pia Dandiya
+  rules: If the House member sworn in for FL-22 for the term beginning in 2027 is a member of the Democratic Party, then the market resolves to Yes.
+  exchange_id: '1017'
+- sig_key: ia_02_house_rep
+  status: matched
+  event: KXHOUSERACE-IA02-26
+  ticker: KXHOUSERACE-IA02-26-R
+  party: rep
+  candidate: Joe Mitchell
+  rules: If the House member sworn in for IA-02 for the term beginning in 2027 is a member of the Republican Party, then the market resolves to Yes.
+  exchange_id: '905'
+- sig_key: ia_02_house_dem
+  status: matched
+  event: KXHOUSERACE-IA02-26
+  ticker: KXHOUSERACE-IA02-26-D
+  party: dem
+  candidate: Lindsay James
+  rules: If the House member sworn in for IA-02 for the term beginning in 2027 is a member of the Democratic Party, then the market resolves to Yes.
+  exchange_id: '904'
+- sig_key: ky_04_house_rep
+  status: matched
+  event: KXHOUSERACE-KY04-26
+  ticker: KXHOUSERACE-KY04-26-R
+  party: rep
+  candidate: Ed Gallrein
+  rules: If the House member sworn in for KY-04 for the term beginning in 2027 is a member of the Republican Party, then the market resolves to Yes.
+  exchange_id: '909'
+- sig_key: ky_04_house_dem
+  status: matched
+  event: KXHOUSERACE-KY04-26
+  ticker: KXHOUSERACE-KY04-26-D
+  party: dem
+  candidate: Melissa Claire Strange
+  rules: If the House member sworn in for KY-04 for the term beginning in 2027 is a member of the Democratic Party, then the market resolves to Yes.
+  exchange_id: '908'
+- sig_key: mn_01_house_rep
+  status: matched
+  event: KXHOUSERACE-MN01-26
+  ticker: KXHOUSERACE-MN01-26-R
+  party: rep
+  candidate: Brad Finstad
+  rules: If the House member sworn in for MN-01 for the term beginning in 2027 is a member of the Republican Party, then the market resolves to Yes.
+  exchange_id: '1024'
+- sig_key: mn_01_house_dem
+  status: matched
+  event: KXHOUSERACE-MN01-26
+  ticker: KXHOUSERACE-MN01-26-D
+  party: dem
+  candidate: Jake Johnson
+  rules: If the House member sworn in for MN-01 for the term beginning in 2027 is a member of the Democratic Party, then the market resolves to Yes.
+  exchange_id: '1023'
+- sig_key: nebraska_senate_dem
+  status: matched
+  event: SENATENE-26
+  ticker: SENATENE-26-D
+  party: dem
+  candidate: Cindy Burbank
+  rules: If a representative of the Democratic party is sworn in as a Senator of Nebraska for the term beginning in 2027, then the market resolves to
+  exchange_id: '968'
+- sig_key: nebraska_senate_rep
+  status: matched
+  event: SENATENE-26
+  ticker: SENATENE-26-R
+  party: rep
+  candidate: Pete Ricketts
+  rules: If a representative of the Republican party is sworn in as a Senator of Nebraska for the term beginning in 2027, then the market resolves to
+  exchange_id: '970'
+- sig_key: ny_13_house_rep
+  status: matched
+  event: KXHOUSERACE-NY13-26
+  ticker: KXHOUSERACE-NY13-26-R
+  party: rep
+  candidate: Manual "Jomo" Williams
+  rules: If the House member sworn in for NY-13 for the term beginning in 2027 is a member of the Republican Party, then the market resolves to Yes.
+  exchange_id: '919'
+- sig_key: ny_13_house_dem
+  status: matched
+  event: KXHOUSERACE-NY13-26
+  ticker: KXHOUSERACE-NY13-26-D
+  party: dem
+  candidate: Darializa Avila Chevalier
+  rules: If the House member sworn in for NY-13 for the term beginning in 2027 is a member of the Democratic Party, then the market resolves to Yes.
+  exchange_id: '918'
+- sig_key: oklahoma_senate_dem
+  status: matched
+  event: SENATEOK-26
+  ticker: SENATEOK-26-D
+  party: dem
+  candidate: "N\u2019Kiyla Thomas"
+  rules: If a representative of the Democratic party is sworn in as a Senator of Oklahoma for the term beginning in 2027, then the market resolves to
+  exchange_id: '1072'
+- sig_key: oklahoma_senate_rep
+  status: matched
+  event: SENATEOK-26
+  ticker: SENATEOK-26-R
+  party: rep
+  candidate: Kevin Hern
+  rules: If a representative of the Republican party is sworn in as a Senator of Oklahoma for the term beginning in 2027, then the market resolves to
+  exchange_id: '975'
+- sig_key: rhode_island_governor_dem
+  status: matched
+  event: GOVPARTYRI-26
+  ticker: GOVPARTYRI-26-D
+  party: dem
+  candidate: Helena Foulkes
+  rules: If a representative of the Democratic party is inaugurated as the governor of Rhode Island pursuant to the 2026 election, then the market re
+  exchange_id: '1073'
+- sig_key: rhode_island_governor_rep
+  status: matched
+  event: GOVPARTYRI-26
+  ticker: GOVPARTYRI-26-R
+  party: rep
+  candidate: Republican party
+  rules: If a representative of the Republican party is inaugurated as the governor of Rhode Island pursuant to the 2026 election, then the market re
+  exchange_id: '1074'
+- sig_key: rhode_island_senate_dem
+  status: matched
+  event: SENATERI-26
+  ticker: SENATERI-26-D
+  party: dem
+  candidate: Jack Reed
+  rules: If a representative of the Democratic party is sworn in as a Senator of Rhode Island for the term beginning in 2027, then the market resolve
+  exchange_id: '1076'
+- sig_key: rhode_island_senate_rep
+  status: matched
+  event: SENATERI-26
+  ticker: SENATERI-26-R
+  party: rep
+  candidate: Raymond McKay
+  rules: If a representative of the Republican party is sworn in as a Senator of Rhode Island for the term beginning in 2027, then the market resolve
+  exchange_id: '1077'
+- sig_key: south_carolina_governor_dem
+  status: matched
+  event: GOVPARTYSC-26
+  ticker: GOVPARTYSC-26-D
+  party: dem
+  candidate: Jermaine Johnson
+  rules: 'If a representative of the Democratic party is inaugurated as the governor of South Carolina pursuant to the 2026 election, then the market '
+  exchange_id: '881'
+- sig_key: south_carolina_governor_rep
+  status: matched
+  event: GOVPARTYSC-26
+  ticker: GOVPARTYSC-26-R
+  party: rep
+  candidate: Alan Wilson
+  rules: 'If a representative of the Republican party is inaugurated as the governor of South Carolina pursuant to the 2026 election, then the market '
+  exchange_id: '882'
+- sig_key: south_dakota_senate_dem
+  status: matched
+  event: SENATESD-26
+  ticker: SENATESD-26-D
+  party: dem
+  candidate: Julian Beaudion
+  rules: If a representative of the Democratic party is sworn in as a Senator of South Dakota for the term beginning in 2027, then the market resolve
+  exchange_id: '980'
+- sig_key: south_dakota_senate_rep
+  status: matched
+  event: SENATESD-26
+  ticker: SENATESD-26-R
+  party: rep
+  candidate: Mike Rounds
+  rules: If a representative of the Republican party is sworn in as a Senator of South Dakota for the term beginning in 2027, then the market resolve
+  exchange_id: '981'
+- sig_key: tn_05_house_rep
+  status: matched
+  event: KXHOUSERACE-TN05-26
+  ticker: KXHOUSERACE-TN05-26-R
+  party: rep
+  candidate: Charlie Hatcher
+  rules: If the House member sworn in for TN-05 for the term beginning in 2027 is a member of the Republican Party, then the market resolves to Yes.
+  exchange_id: '1030'
+- sig_key: tn_05_house_dem
+  status: matched
+  event: KXHOUSERACE-TN05-26
+  ticker: KXHOUSERACE-TN05-26-D
+  party: dem
+  candidate: Chaz Molder
+  rules: If the House member sworn in for TN-05 for the term beginning in 2027 is a member of the Democratic Party, then the market resolves to Yes.
+  exchange_id: '1029'
+- sig_key: tx_23_house_rep
+  status: matched
+  event: KXHOUSERACE-TX23-26
+  ticker: KXHOUSERACE-TX23-26-R
+  party: rep
+  candidate: Brandon Herrera
+  rules: If the House member sworn in for TX-23 for the term beginning in 2027 is a member of the Republican Party, then the market resolves to Yes.
+  exchange_id: '935'
+- sig_key: tx_23_house_dem
+  status: matched
+  event: KXHOUSERACE-TX23-26
+  ticker: KXHOUSERACE-TX23-26-D
+  party: dem
+  candidate: Katy Padilla Stout
+  rules: If the House member sworn in for TX-23 for the term beginning in 2027 is a member of the Democratic Party, then the market resolves to Yes.
+  exchange_id: '934'
+- sig_key: va_05_house_rep
+  status: matched
+  event: KXHOUSERACE-VA05-26
+  ticker: KXHOUSERACE-VA05-26-R
+  party: rep
+  candidate: John McGuire
+  rules: If the House member sworn in for VA-05 for the term beginning in 2027 is a member of the Republican Party, then the market resolves to Yes.
+  exchange_id: '1034'
+- sig_key: va_05_house_dem
+  status: matched
+  event: KXHOUSERACE-VA05-26
+  ticker: KXHOUSERACE-VA05-26-D
+  party: dem
+  candidate: Tom Perriello
+  rules: If the House member sworn in for VA-05 for the term beginning in 2027 is a member of the Democratic Party, then the market resolves to Yes.
+  exchange_id: '1033'
+- sig_key: west_virginia_senate_dem
+  status: matched
+  event: SENATEWV-26
+  ticker: SENATEWV-26-D
+  party: dem
+  candidate: Rachel Fetty Anderson
+  rules: If a representative of the Democratic party is sworn in as a Senator of West Virginia for the term beginning in 2027, then the market resolv
+  exchange_id: '985'
+- sig_key: west_virginia_senate_rep
+  status: matched
+  event: SENATEWV-26
+  ticker: SENATEWV-26-R
+  party: rep
+  candidate: Shelley Moore Capito
+  rules: If a representative of the Republican party is sworn in as a Senator of West Virginia for the term beginning in 2027, then the market resolv
+  exchange_id: '986'
+- sig_key: wyoming_governor_dem
+  status: matched
+  event: GOVPARTYWY-26
+  ticker: GOVPARTYWY-26-D
+  party: dem
+  candidate: Kenneth Casner
+  rules: If a representative of the Democratic party is inaugurated as the governor of Wyoming pursuant to the 2026 election, then the market resolve
+  exchange_id: '1005'
+- sig_key: wyoming_governor_rep
+  status: matched
+  event: GOVPARTYWY-26
+  ticker: GOVPARTYWY-26-R
+  party: rep
+  candidate: Eric Barlow
+  rules: If a representative of the Republican party is inaugurated as the governor of Wyoming pursuant to the 2026 election, then the market resolve
+  exchange_id: '1006'
+- sig_key: wyoming_senate_dem
+  status: matched
+  event: SENATEWY-26
+  ticker: SENATEWY-26-D
+  party: dem
+  candidate: James Byrd
+  rules: 'If a representative of the Democratic party is sworn in as a Senator of Wyoming for the term beginning in 2027, then the market resolves to '
+  exchange_id: '1054'
+- sig_key: wyoming_senate_rep
+  status: matched
+  event: SENATEWY-26
+  ticker: SENATEWY-26-R
+  party: rep
+  candidate: Harriet Hageman
+  rules: 'If a representative of the Republican party is sworn in as a Senator of Wyoming for the term beginning in 2027, then the market resolves to '
+  exchange_id: '1055'
+unmatched:
+- sig_key: kansas_governor_rep
+  status: no_kalshi_event
+  exchange_id: '993'
+- sig_key: kansas_governor_dem
+  status: no_kalshi_event
+  exchange_id: '992'
+- sig_key: new_hampshire_governor_rep
+  status: no_kalshi_event
+  exchange_id: '1062'
+- sig_key: new_hampshire_governor_dem
+  status: no_kalshi_event
+  exchange_id: '1061'
+- sig_key: nh_01_house_rep
+  status: no_kalshi_event
+  exchange_id: '1065'
+- sig_key: nh_01_house_dem
+  status: no_kalshi_event
+  exchange_id: '1064'
+- sig_key: tx_15_house_rep
+  status: no_kalshi_event
+  exchange_id: '933'
+- sig_key: tx_15_house_dem
+  status: no_kalshi_event
+  exchange_id: '932'
+- sig_key: va_01_house_rep
+  status: no_kalshi_event
+  exchange_id: '938'
+- sig_key: va_01_house_dem
+  status: no_kalshi_event
+  exchange_id: '1031'
+- sig_key: minnesota_senate_dem
+  status: party_markets_0
+  event: SENATEMN-26
+  exchange_id: '1049'
+- sig_key: az_01_house_rep
+  status: no_kalshi_event
+  exchange_id: '887'
+- sig_key: az_01_house_dem
+  status: no_kalshi_event
+  exchange_id: '886'
+- sig_key: az_06_house_rep
+  status: no_kalshi_event
+  exchange_id: '889'
+- sig_key: az_06_house_dem
+  status: no_kalshi_event
+  exchange_id: '888'
+- sig_key: ca_22_house_rep
+  status: no_kalshi_event
+  exchange_id: '891'
+- sig_key: ca_22_house_dem
+  status: no_kalshi_event
+  exchange_id: '890'
+- sig_key: co_03_house_rep
+  status: no_kalshi_event
+  exchange_id: '895'
+- sig_key: co_03_house_dem
+  status: no_kalshi_event
+  exchange_id: '894'
+- sig_key: co_08_house_rep
+  status: no_kalshi_event
+  exchange_id: '899'
+- sig_key: co_08_house_dem
+  status: no_kalshi_event
+  exchange_id: '898'
+- sig_key: fl_13_house_rep
+  status: no_kalshi_event
+  exchange_id: '901'
+- sig_key: fl_13_house_dem
+  status: no_kalshi_event
+  exchange_id: '1012'
+- sig_key: ia_01_house_rep
+  status: no_kalshi_event
+  exchange_id: '903'
+- sig_key: ia_01_house_dem
+  status: no_kalshi_event
+  exchange_id: '902'
+- sig_key: ia_03_house_rep
+  status: no_kalshi_event
+  exchange_id: '907'
+- sig_key: ia_03_house_dem
+  status: no_kalshi_event
+  exchange_id: '906'
+- sig_key: kentucky_senate_dem
+  status: no_kalshi_event
+  exchange_id: '955'
+- sig_key: kentucky_senate_rep
+  status: no_kalshi_event
+  exchange_id: '956'
+- sig_key: me_02_house_rep
+  status: no_kalshi_event
+  exchange_id: '911'
+- sig_key: me_02_house_dem
+  status: no_kalshi_event
+  exchange_id: '910'
+- sig_key: mi_07_house_rep
+  status: no_kalshi_event
+  exchange_id: '1020'
+- sig_key: mi_07_house_dem
+  status: no_kalshi_event
+  exchange_id: '1019'
+- sig_key: mi_10_house_rep
+  status: no_kalshi_event
+  exchange_id: '1022'
+- sig_key: mi_10_house_dem
+  status: no_kalshi_event
+  exchange_id: '1021'
+- sig_key: mn_02_house_rep
+  status: no_kalshi_event
+  exchange_id: '1026'
+- sig_key: mn_02_house_dem
+  status: no_kalshi_event
+  exchange_id: '1025'
+- sig_key: mt_01_house_rep
+  status: no_kalshi_event
+  exchange_id: '913'
+- sig_key: mt_01_house_dem
+  status: no_kalshi_event
+  exchange_id: '912'
+- sig_key: ne_02_house_rep
+  status: no_kalshi_event
+  exchange_id: '915'
+- sig_key: ne_02_house_dem
+  status: no_kalshi_event
+  exchange_id: '914'
+- sig_key: nj_07_house_rep
+  status: no_kalshi_event
+  exchange_id: '917'
+- sig_key: nj_07_house_dem
+  status: no_kalshi_event
+  exchange_id: '916'
+- sig_key: ny_17_house_rep
+  status: no_kalshi_event
+  exchange_id: '921'
+- sig_key: ny_17_house_dem
+  status: no_kalshi_event
+  exchange_id: '920'
+- sig_key: pa_01_house_rep
+  status: no_kalshi_event
+  exchange_id: '923'
+- sig_key: pa_01_house_dem
+  status: no_kalshi_event
+  exchange_id: '922'
+- sig_key: pa_07_house_rep
+  status: no_kalshi_event
+  exchange_id: '925'
+- sig_key: pa_07_house_dem
+  status: no_kalshi_event
+  exchange_id: '924'
+- sig_key: pa_08_house_rep
+  status: no_kalshi_event
+  exchange_id: '927'
+- sig_key: pa_08_house_dem
+  status: no_kalshi_event
+  exchange_id: '926'
+- sig_key: pa_10_house_rep
+  status: no_kalshi_event
+  exchange_id: '929'
+- sig_key: pa_10_house_dem
+  status: no_kalshi_event
+  exchange_id: '928'
+- sig_key: tx_28_house_rep
+  status: no_kalshi_event
+  exchange_id: '937'
+- sig_key: tx_28_house_dem
+  status: no_kalshi_event
+  exchange_id: '936'
+- sig_key: va_02_house_rep
+  status: no_kalshi_event
+  exchange_id: '939'
+- sig_key: va_02_house_dem
+  status: no_kalshi_event
+  exchange_id: '1032'
+- sig_key: va_07_house_rep
+  status: no_kalshi_event
+  exchange_id: '1035'
+- sig_key: va_07_house_dem
+  status: no_kalshi_event
+  exchange_id: '940'
+- sig_key: wa_03_house_rep
+  status: no_kalshi_event
+  exchange_id: '1037'
+- sig_key: wa_03_house_dem
+  status: no_kalshi_event
+  exchange_id: '1036'
+- sig_key: wi_01_house_rep
+  status: no_kalshi_event
+  exchange_id: '1039'
+- sig_key: wi_01_house_dem
+  status: no_kalshi_event
+  exchange_id: '1038'
+- sig_key: wi_03_house_rep
+  status: no_kalshi_event
+  exchange_id: '1041'
+- sig_key: wi_03_house_dem
+  status: no_kalshi_event
+  exchange_id: '1040'

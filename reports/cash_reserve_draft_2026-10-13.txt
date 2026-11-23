@@ -1,0 +1,41 @@
+cash $6,110  target $40,000  need $33,890  | holdings 48 worth $84,049 at bids
+owned by pilots (excluded): ['fresh_gap']
+   ex side title                                              qty    bid   fair   edge   $ bid    cum $
+  971 yes  Will the Democratic Party win the New Jersey S       3   0.95  0.974    2.4       3        3 <- SELL
+ 1027 yes  Will the Democratic Party win the MN-05 House     1089   0.91  0.935    2.5     991      994 <- SELL
+ 1036 yes  Will the Democratic Party win the WA-03 House     2099  0.865  0.895    3.0   1,816    2,810 <- SELL
+ 1046 yes  Will the Republican Party win the Kansas Senat    1615  0.595  0.625    3.0     961    3,771 <- SELL
+ 1064 yes  Will the Democratic Party win the NH-01 House     1078  0.925  0.957    3.1     997    4,768 <- SELL
+  847 yes  Will the Republican Party win the Arkansas Gov    4682  0.935   0.97    3.4   4,378    9,146 <- SELL
+  909 yes  Will the Republican Party win the KY-04 House       33   0.93  0.964    3.4      31    9,177 <- SELL
+ 1068 yes  Will the Democratic Party win the Massachusett     137   0.95  0.984    3.4     130    9,307 <- SELL
+ 1003 yes  Will the Democratic Party win the Wisconsin Go       7   0.77  0.805    3.5       5    9,312 <- SELL
+  984 yes  Will the Democratic Party win the Virginia Sen      10  0.935  0.978    4.3       9    9,321 <- SELL
+  896 no   Will the Democratic Party win the CO-04 House     1544   0.66  0.705    4.5   1,019   10,340 <- SELL
+  962 yes  Will the Republican Party win the Mississippi        9   0.89  0.935    4.5       8   10,348 <- SELL
+  977 no   Will the Republican Party win the Oregon Senat     999   0.93  0.979    4.9     929   11,277 <- SELL
+  899 no   Will the Republican Party win the CO-08 House       88  0.805  0.855    5.0      71   11,348 <- SELL
+  995 no   Will the Republican Party win the Michigan Gov    4251  0.885  0.937    5.2   3,762   15,110 <- SELL
+  980 no   Will the Democratic Party win the South Dakota    4872  0.945  0.999    5.4   4,604   19,714 <- SELL
+  846 no   Will the Democratic Party win the Arkansas Gov     983   0.92  0.977    5.6     904   20,618 <- SELL
+ 1062 yes  Will the Republican Party win the New Hampshir     219  0.885  0.942    5.6     194   20,812 <- SELL
+  975 yes  Will the Republican Party win the Oklahoma Sen      20  0.915  0.972    5.7      18   20,830 <- SELL
+ 1028 no   Will the Republican Party win the MN-05 House     4156   0.89  0.947    5.7   3,699   24,529 <- SELL
+ 1065 no   Will the Republican Party win the NH-01 House     4965  0.905  0.962    5.7   4,493   29,022 <- SELL
+ 1026 no   Will the Republican Party win the MN-02 House     4960   0.88  0.941    6.0   4,365   33,387 <- SELL
+ 1061 no   Will the Democratic Party win the New Hampshir    4027   0.88  0.941    6.0   3,544   36,931 <- SELL
+  987 yes  Will the Democratic Party win the Connecticut     5210    0.9  0.966    6.6   4,689   36,931 
+ 1069 no   Will the Republican Party win the Massachusett      59  0.915  0.982    6.7      54   36,931 
+ 1073 yes  Will the Democratic Party win the Rhode Island    1016    0.9  0.972    7.2     914   36,931 
+ 1075 no   Will the Republican Party win the Delaware Sen    5178  0.905  0.984    7.9   4,686   36,931 
+  865 yes  Will the Democratic Party win the Maine Govern    5291  0.875  0.955    8.0   4,630   36,931 
+ 1074 no   Will the Republican Party win the Rhode Island    5209    0.9   0.98    8.0   4,688   36,931 
+ 1072 no   Will the Democratic Party win the Oklahoma Sen    4915   0.89  0.981    9.1   4,374   36,931 
+  946 no   Will the Republican Party win the Colorado Sen    5158  0.895  0.987    9.2   4,616   36,931 
+ 1043 no   Will the Democratic Party win the Florida Sena     411    0.8  0.895    9.5     329   36,931 
+ 1044 yes  Will the Republican Party win the Florida Sena    2953    0.8  0.905   10.5   2,362   36,931 
+ 1076 yes  Will the Democratic Party win the Rhode Island    2212  0.855  0.981   12.6   1,891   36,931 
+ 1077 no   Will the Republican Party win the Rhode Island    5552  0.835  0.985   15.0   4,636   36,931 
+
+selling the marked rows raises ~$36,931; expected value given up (edge x shares) ~$1,837
+no Poly fair (not ranked): 7 holdings $31: 964 $9, 888 $7, 901 $5, 936 $4, 1022 $3, 983 $2, 1066 $1

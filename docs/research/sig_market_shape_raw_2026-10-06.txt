@@ -1,0 +1,109 @@
+SIG grid: 239 markets x 4145 minutes  2026-10-03 11:02:00+00:00 .. 2026-10-06 08:06:00+00:00
+
+== A. UNIVERSE ==
+markets by office: {'house': 92, 'governor': 66, 'senate': 66, 'unmapped': 11, 'control': 4}
+price level of markets now: {Interval(0.0, 0.05, closed='right'): 10, Interval(0.05, 0.15, closed='right'): 53, Interval(0.15, 0.35, closed='right'): 45, Interval(0.35, 0.65, closed='right'): 28, Interval(0.65, 0.85, closed='right'): 40, Interval(0.85, 0.95, closed='right'): 58, Interval(0.95, 1.0, closed='right'): 5}
+spread now (c):  {'25%': 0.5, '50%': 0.5, '75%': 0.5, 'max': 4.0}  share at 1 tick(0.5c): 0.84
+top-of-book depth (shares) median bid/ask: 3058.5 3851.0
+
+== B. HOW OFTEN AND HOW MUCH SIG MOVES ==
+share of market-minutes with any mid change: 0.096
+size of 1-min moves in ticks (0.5c): {0.0: 0.241, 1.0: 0.703, 2.0: 0.044, 3.0: 0.007, 4.0: 0.002, 5.0: 0.001, 6.0: 0.0, 7.0: 0.0, 8.0: 0.0, 9.0: 0.0, 10.0: 0.0}
+  |change| over   60m: median 0.00c  p90 1.00c  p99 2.50c  kurtosis 19.3
+  |change| over  240m: median 0.50c  p90 2.00c  p99 4.50c  kurtosis 8.9
+  |change| over 1440m: median 1.50c  p90 4.00c  p99 7.50c  kurtosis 1.3
+3-day PATH vs RANGE per market (median): path 127.5c, range 6.5c, efficiency 0.049  (1.0 = straight line, ~0 = pure back-and-forth)
+by UTC hour  act%: {0: 11.2, 1: 7.1, 2: 5.4, 3: 5.4, 4: 4.8, 5: 5.1, 6: 8.8, 7: 9.4, 8: 10.8, 9: 10.1, 10: 10.3, 11: 11.0, 12: 10.1, 13: 10.9, 14: 12.9, 15: 11.9, 16: 12.4, 17: 9.6, 18: 10.4, 19: 11.2, 20: 10.3, 21: 11.4, 22: 11.7, 23: 9.8}
+by UTC hour 60m |chg| c: {0: 0.32, 1: 0.31, 2: 0.3, 3: 0.29, 4: 0.31, 5: 0.32, 6: 0.28, 7: 0.26, 8: 0.3, 9: 0.26, 10: 0.24, 11: 0.27, 12: 0.37, 13: 0.35, 14: 0.41, 15: 0.41, 16: 0.4, 17: 0.41, 18: 0.4, 19: 0.43, 20: 0.44, 21: 0.43, 22: 0.4, 23: 0.34}
+by weekday act%: {0: 6.1, 1: 6.0, 5: 16.5, 6: 10.7}
+by office:
+             act  vol60_c
+office                  
+control   0.055    0.359
+governor  0.088    0.382
+house     0.088    0.242
+senate    0.092    0.429
+unmapped  0.123    0.469
+
+== C. DOES SIG TREND OR REVERT? ==
+  autocorr of   1m changes vs previous   1m: -0.202
+  autocorr of   5m changes vs previous   5m: -0.143
+  autocorr of  15m changes vs previous  15m: -0.104
+  autocorr of  60m changes vs previous  60m: -0.058
+  variance ratio VR(  5) = 0.661   (1 = random walk, <1 = noise that reverts, >1 = trends)
+  variance ratio VR( 15) = 0.521   (1 = random walk, <1 = noise that reverts, >1 = trends)
+  variance ratio VR( 60) = 0.429   (1 = random walk, <1 = noise that reverts, >1 = trends)
+  variance ratio VR(240) = 0.368   (1 = random walk, <1 = noise that reverts, >1 = trends)
+  variance ratio VR(720) = 0.318   (1 = random walk, <1 = noise that reverts, >1 = trends)
+  after a 1-min UP move, next 5m mean -0.099c; after DOWN +0.090c
+
+== D. HOW SIG RELATES TO ITSELF ==
+D+R pairs: 114. sum-1 (c): mean +0.43, median +0.75, |dev|>2c 0.28, >4c 0.038
+  parity deviation persistence: 15m autocorr 0.919 -> half-life ~123 min
+  corr of 15m changes R vs D leg: median -0.12 (efficient = -1.00)
+  PCA of 60m changes (239 mkts): PC1 0.06, PC2 0.05, PC3 0.04 of variance
+  PC1 loading mean by party: {'?': -0.014, 'dem': -0.003, 'rep': -0.015}
+  corr(avg D-leg move, avg R-leg move) over 60m: -0.09
+  typical corr between DIFFERENT races' D legs (60m): median +0.003
+
+== E. HOW SIG RELATES TO POLYMARKET (16h) ==
+gap = Poly - SIG (c): mean -0.40, median |gap| 2.75, p90 |gap| 6.45
+  mean |gap| by SIG price level: {Interval(0.0, 0.1, closed='right'): 3.55, Interval(0.1, 0.3, closed='right'): 4.15, Interval(0.3, 0.7, closed='right'): 1.8, Interval(0.7, 0.9, closed='right'): 3.8, Interval(0.9, 1.0, closed='right'): 2.73}
+  mean signed gap by level (+ = SIG below Poly): {Interval(0.0, 0.1, closed='right'): -3.54, Interval(0.1, 0.3, closed='right'): -4.11, Interval(0.3, 0.7, closed='right'): -0.79, Interval(0.7, 0.9, closed='right'): 3.6, Interval(0.9, 1.0, closed='right'): 2.66}
+  mean |gap| by office: {'control': 3.07, 'governor': 3.73, 'house': 2.41, 'senate': 3.95}
+  gap persistence: 15m autocorr 0.944 -> half-life ~179 min
+  Poly 60m |chg| 0.05c vs SIG 0.22c
+  corr(Poly 15m chg, SIG 15m chg   0m later): +nan
+  corr(Poly 15m chg, SIG 15m chg   5m later): +nan
+  corr(Poly 15m chg, SIG 15m chg  15m later): +nan
+  corr(Poly 15m chg, SIG 15m chg  30m later): +nan
+  corr(Poly 15m chg, SIG 15m chg  60m later): +nan
+  corr(Poly 15m chg, SIG 15m chg 120m later): +nan
+  when |gap|>=5c: next 240m SIG moves toward Poly +0.09c, Poly moves toward SIG -0.00c
+
+== F. JUMPS (|5m move| >= 3c) ==
+jump events: 164 over 239 mkts / 2.9 d
+  after a jump, next  15m: mean reversal +0.82c (share reverting 0.00, n=990655)
+  after a jump, next  60m: mean reversal +0.64c (share reverting 0.00, n=990655)
+  after a jump, next 240m: mean reversal +0.56c (share reverting 0.00, n=990655)
+  Poly also moved >=1c: n=190904 next-60m reversal +nanc
+  Poly flat           : n=190904 next-60m reversal -1.45c
+== activity by calendar day (share of market-minutes with a change) ==
+{datetime.date(2026, 10, 3): 16.5, datetime.date(2026, 10, 4): 10.7, datetime.date(2026, 10, 5): 6.1, datetime.date(2026, 10, 6): 6.0}
+
+== Poly leads SIG? corr(Poly 15m change, SIG 15m change starting k min later) ==
+  k= -15m  corr -0.012
+  k=   0m  corr +0.009
+  k=  15m  corr +0.024
+  k=  30m  corr +0.017
+  k=  60m  corr +0.022
+  k= 120m  corr +0.009
+  k= 240m  corr +0.002
+  after Poly moved >=1c in 15m (n=371): SIG follows +0.08c within 15m
+  after Poly moved >=1c in 15m (n=351): SIG follows +0.24c within 60m
+  after Poly moved >=1c in 15m (n=297): SIG follows +0.25c within 240m
+
+== Gap decomposition: persistent per-market bias vs transient wiggle ==
+  |per-market mean gap| median 2.65c ; transient part std 0.82c
+  share of gap variance that is persistent per-market: 0.96
+  transient part: 15m autocorr 0.944 -> half-life ~179 min
+  per-market mean gap 1st half vs 2nd half of window: corr +0.96 (1 = the bias is stable), mean |gap| 3.23 -> 3.21c
+  per-market mean gap by price level (+ = SIG too low): {Interval(0.0, 0.1, closed='right'): -3.73, Interval(0.1, 0.3, closed='right'): -4.05, Interval(0.3, 0.7, closed='right'): -0.84, Interval(0.7, 0.9, closed='right'): 2.91, Interval(0.9, 1.0, closed='right'): 2.98}
+
+== Jumps (|5m move| >= 3c), fixed ==
+  events 164
+  next   15m: mean give-back +0.82c  median +0.50c  share giving back 0.62  n=164
+  next   60m: mean give-back +0.64c  median +0.50c  share giving back 0.59  n=164
+  next  240m: mean give-back +0.56c  median +0.50c  share giving back 0.61  n=164
+  next  720m: mean give-back +0.80c  median +1.00c  share giving back 0.65  n=152
+  Poly also moved : n=  0 next-60m give-back +nanc ; jump was TOWARD Poly in nan of cases
+  Poly flat       : n= 11 next-60m give-back -1.45c ; jump was TOWARD Poly in 0.43 of cases
+
+== D+R parity: how fast does a deviation close, and is it tradable? ==
+  |sum-1|>=2c (starts n=3665): closes +0.41c of it within 60m, share closing 0.61
+  |sum-1|>=2c (starts n=3582): closes +0.65c of it within 240m, share closing 0.65
+  |sum-1|>=3c (starts n=2313): closes +0.64c of it within 60m, share closing 0.67
+  |sum-1|>=3c (starts n=2232): closes +1.16c of it within 240m, share closing 0.75
+  |sum-1|>=4c (starts n=1085): closes +0.96c of it within 60m, share closing 0.79
+  |sum-1|>=4c (starts n=1056): closes +1.71c of it within 240m, share closing 0.87
+  most persistent mispriced races (mean sum-1, c): {'nebraska_senate': -22.54, 'fl_20_house': -2.73, 'connecticut_governor': -2.19, 'pennsylvania_governor': 2.65, 'north_carolina_senate': 2.76, 'va_01_house': 2.84}

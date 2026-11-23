@@ -1,0 +1,232 @@
+# chamber_baselines.yaml — the FACTUAL structural layer for strategies/chamber_model.
+#
+# ============================================================================================
+# THIS FILE IS DATA, NOT A MODEL. Everything here is a verifiable 2026 fact with a source.
+# A wrong "seats needed for control" or a misattributed seat corrupts EVERY downstream joint-
+# structure calculation, so each block carries a `confidence` and nothing is guessed. Where a
+# fact could not be independently confirmed it is marked UNVERIFIED rather than filled in.
+#
+# The model assumptions live in config/sig.yaml under `chamber_model:` — deliberately NOT here,
+# so facts and hypotheses can never be confused for one another.
+# ============================================================================================
+#
+# Verified 2026-10-02 against:
+#   [W-SEN]  https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+#   [W-GOV]  https://en.wikipedia.org/wiki/2026_United_States_gubernatorial_elections
+#   [BP]     https://ballotpedia.org/United_States_Congress_elections,_2026
+#   [CC]     https://www.congresscountdown.com/info/party-breakdown
+#   [270]    https://www.270towin.com/2026-senate-election/
+#   [OK]     https://ballotpedia.org/United_States_Senate_election_in_Oklahoma,_2026
+#   [TT]     https://www.texastribune.org/2026/05/26/texas-john-cornyn-ken-paxton-us-senate-republican-primary-runoff/
+#   [HILL]   https://thehill.com/homenews/campaign/5938059-congressional-incumbents-lose-primaries/
+#
+# NOTE ON KNOWLEDGE CUTOFF: 2026 specifics post-date the assistant's training data and were
+# SEARCHED, not recalled. One concrete example of why that matters: Oklahoma's Class 2 senator
+# Markwayne Mullin RESIGNED in March 2026 to become Secretary of Homeland Security; appointee
+# Alan Armstrong is barred from seeking the full term, so that seat is OPEN [OK]. Reasoning from
+# memory would have recorded Mullin as the running incumbent.
+
+meta:
+  election_date: "2026-11-03"
+  settlement_utc: "2026-11-04T17:00:00Z"   # matches SIG market settlementDate
+  verified_on: "2026-10-02"
+  # Facts whose SOURCES AGREE and whose arithmetic is internally consistent (see the derived
+  # checks in strategies/chamber_model/baselines.py, which recompute and FAIL on mismatch).
+  confidence_notes: >
+    Composition totals, seats-up lists with the party holding each, control thresholds and the
+    VP tiebreak are VERIFIED (multiple independent sources agree AND the seat arithmetic closes:
+    not_up + up == total, and up_by_party sums to the up total). Individual incumbent NAMES and
+    running/retiring statuses come from a single source table [W-SEN]/[W-GOV]; three were spot-
+    checked independently (Oklahoma [OK], Texas [TT], Louisiana [HILL]) and all three confirmed,
+    but the remainder are marked single_source. Names are descriptive only -- no control
+    arithmetic depends on them.
+
+# =====================================================================================
+# SENATE
+# =====================================================================================
+senate:
+  confidence: VERIFIED
+  total_seats: 100
+  # Composition going INTO the 2026 election [W-SEN][CC]
+  composition:
+    republican: 53
+    democratic: 45
+    independent: 2
+    independents_caucus_with: democratic   # effective 53R - 47D
+  majority_seats: 51
+  # *** THE ASYMMETRY THAT IS EASY TO GET WRONG ***
+  # The VP breaks ties, so a 50-50 Senate is organised by the VP's party. VP JD Vance is a
+  # Republican and has cast 8 tiebreaking votes in 2026 [W-SEN]. Therefore REPUBLICANS control
+  # at 50 while DEMOCRATS need 51. Encoding a single "51 for everyone" threshold would make the
+  # model think a 50-50 outcome is Democratic control -- wrong by one seat on the most
+  # probability-dense outcome in the distribution.
+  vice_president_party: republican
+  vp_breaks_ties: true
+  control_threshold:
+    republican: 50      # 50 + VP tiebreak
+    democratic: 51
+  seats_up_total: 35
+  regular_class_2: 33
+  special_elections: 2   # Class 3 vacancies: FL (Rubio seat), OH (Vance seat)
+  seats_up_by_party:
+    republican: 22
+    democratic: 13
+  # NOT on the ballot — held through 2026 regardless of any result. Derived as
+  # composition - seats_up_by_party, and re-asserted in code.
+  seats_not_up:
+    republican: 31
+    democratic: 34       # 32 D + 2 I caucusing D
+  # Net gain needed FROM the 35 up-seats [W-SEN][270]
+  democratic_net_gain_for_control: 4    # D hold 13 of the up-seats, need 17 (34 + 17 = 51)
+  republican_can_lose: 2                # 22 -> 20 keeps 51; losing 3 -> 50, still control via VP
+  seats_up:
+    # class: 2 = regular Class 2; special = Class 3 vacancy special election
+    # status: running | retiring | open_appointee_barred | lost_renomination
+    #   "open" (no incumbent on the ballot) == status != running
+    - {state: alabama,        class: 2,       party: republican, incumbent: "Tommy Tuberville",     status: retiring}
+    - {state: alaska,         class: 2,       party: republican, incumbent: "Dan Sullivan",         status: running}
+    - {state: arkansas,       class: 2,       party: republican, incumbent: "Tom Cotton",           status: running}
+    - {state: colorado,       class: 2,       party: democratic, incumbent: "John Hickenlooper",    status: running}
+    - {state: delaware,       class: 2,       party: democratic, incumbent: "Chris Coons",          status: running}
+    - {state: florida,        class: special, party: republican, incumbent: "Ashley Moody",         status: running}
+    - {state: georgia,        class: 2,       party: democratic, incumbent: "Jon Ossoff",           status: running}
+    - {state: idaho,          class: 2,       party: republican, incumbent: "Jim Risch",            status: running}
+    - {state: illinois,       class: 2,       party: democratic, incumbent: "Dick Durbin",          status: retiring}
+    - {state: iowa,           class: 2,       party: republican, incumbent: "Joni Ernst",           status: retiring}
+    - {state: kansas,         class: 2,       party: republican, incumbent: "Roger Marshall",       status: running}
+    - {state: kentucky,       class: 2,       party: republican, incumbent: "Mitch McConnell",      status: retiring}
+    - {state: louisiana,      class: 2,       party: republican, incumbent: "Bill Cassidy",         status: lost_renomination}
+    - {state: maine,          class: 2,       party: republican, incumbent: "Susan Collins",        status: running}
+    - {state: massachusetts,  class: 2,       party: democratic, incumbent: "Ed Markey",            status: running}
+    - {state: michigan,       class: 2,       party: democratic, incumbent: "Gary Peters",          status: retiring}
+    - {state: minnesota,      class: 2,       party: democratic, incumbent: "Tina Smith",           status: retiring}
+    - {state: mississippi,    class: 2,       party: republican, incumbent: "Cindy Hyde-Smith",     status: running}
+    - {state: montana,        class: 2,       party: republican, incumbent: "Steve Daines",         status: retiring}
+    - {state: nebraska,       class: 2,       party: republican, incumbent: "Pete Ricketts",        status: running}
+    - {state: new hampshire,  class: 2,       party: democratic, incumbent: "Jeanne Shaheen",       status: retiring}
+    - {state: new jersey,     class: 2,       party: democratic, incumbent: "Cory Booker",          status: running}
+    - {state: new mexico,     class: 2,       party: democratic, incumbent: "Ben Ray Lujan",        status: running}
+    - {state: north carolina, class: 2,       party: republican, incumbent: "Thom Tillis",          status: retiring}
+    - {state: ohio,           class: special, party: republican, incumbent: "Jon Husted",           status: running}
+    - {state: oklahoma,       class: 2,       party: republican, incumbent: "Alan Armstrong",       status: open_appointee_barred}
+    - {state: oregon,         class: 2,       party: democratic, incumbent: "Jeff Merkley",         status: running}
+    - {state: rhode island,   class: 2,       party: democratic, incumbent: "Jack Reed",            status: running}
+    - {state: south carolina, class: 2,       party: republican, incumbent: "Lindsey Graham",       status: running}
+    - {state: south dakota,   class: 2,       party: republican, incumbent: "Mike Rounds",          status: running}
+    - {state: tennessee,      class: 2,       party: republican, incumbent: "Bill Hagerty",         status: running}
+    - {state: texas,          class: 2,       party: republican, incumbent: "John Cornyn",          status: lost_renomination}
+    - {state: virginia,       class: 2,       party: democratic, incumbent: "Mark Warner",          status: running}
+    - {state: west virginia,  class: 2,       party: republican, incumbent: "Shelley Moore Capito", status: running}
+    - {state: wyoming,        class: 2,       party: republican, incumbent: "Cynthia Lummis",       status: retiring}
+
+# =====================================================================================
+# HOUSE
+# =====================================================================================
+house:
+  confidence: VERIFIED
+  total_seats: 435
+  all_seats_up: true          # biennial — every seat, every cycle
+  majority_seats: 218
+  # Composition as of late September 2026 [CC][BP]. NOTE the 2 vacancies: 218+214+1+2 = 435.
+  composition:
+    republican: 218
+    democratic: 214
+    independent: 1
+    vacant: 2
+  # The independent's caucus is NOT recorded here because it is not reliably establishable from
+  # the sources consulted, and guessing would shift a 218-vs-217 control call.
+  independent_caucuses_with: UNVERIFIED
+  democratic_net_gain_for_control: 3   # [BP] "Democrats need to gain a net of three districts"
+  # No VP tiebreak exists in the House; 218 of 435 is a strict majority for either party.
+  control_threshold:
+    republican: 218
+    democratic: 218
+  # Per-seat baselines for all 435 districts are NOT recorded: SIG lists only 46 House districts
+  # (see sig_coverage), so a full roster would be 389 rows of data no market references. The
+  # chamber-control math uses the aggregate composition, which is what the control markets price.
+  per_district_baselines: NOT_RECORDED_BY_DESIGN
+
+# =====================================================================================
+# GOVERNORS
+# =====================================================================================
+governors:
+  confidence: VERIFIED
+  # SIG DOES list governor markets (35 states), so this block is in scope.
+  # *** There is NO "control of the governorships" market and no majority threshold: each
+  # governorship is its own contest. So governors get NO joint-control structure -- they are
+  # same-race complementary pairs only (already handled by strategies/relationship_engine).
+  has_control_market: false
+  control_threshold: null
+  nationwide_before:
+    republican: 26
+    democratic: 24
+  states_up: 36               # plus 3 territories, which SIG does not list
+  seats_up_by_party:
+    republican: 18
+    democratic: 18
+  seats_up:
+    # status: running | term_limited | retiring | lost_renomination
+    # Minnesota's incumbent is DFL (Minnesota Democratic-Farmer-Labor), normalised to democratic.
+    - {state: alabama,        party: republican, incumbent: "Kay Ivey",                status: term_limited}
+    - {state: alaska,         party: republican, incumbent: "Mike Dunleavy",           status: term_limited}
+    - {state: arizona,        party: democratic, incumbent: "Katie Hobbs",             status: running}
+    - {state: arkansas,       party: republican, incumbent: "Sarah Huckabee Sanders",  status: running}
+    - {state: california,     party: democratic, incumbent: "Gavin Newsom",            status: term_limited}
+    - {state: colorado,       party: democratic, incumbent: "Jared Polis",             status: term_limited}
+    - {state: connecticut,    party: democratic, incumbent: "Ned Lamont",              status: running}
+    - {state: florida,        party: republican, incumbent: "Ron DeSantis",            status: term_limited}
+    - {state: georgia,        party: republican, incumbent: "Brian Kemp",              status: term_limited}
+    - {state: hawaii,         party: democratic, incumbent: "Josh Green",              status: running}
+    - {state: idaho,          party: republican, incumbent: "Brad Little",             status: running}
+    - {state: illinois,       party: democratic, incumbent: "JB Pritzker",             status: running}
+    - {state: iowa,           party: republican, incumbent: "Kim Reynolds",            status: retiring}
+    - {state: kansas,         party: democratic, incumbent: "Laura Kelly",             status: term_limited}
+    - {state: maine,          party: democratic, incumbent: "Janet Mills",             status: term_limited}
+    - {state: maryland,       party: democratic, incumbent: "Wes Moore",               status: running}
+    - {state: massachusetts,  party: democratic, incumbent: "Maura Healey",            status: running}
+    - {state: michigan,       party: democratic, incumbent: "Gretchen Whitmer",        status: term_limited}
+    - {state: minnesota,      party: democratic, incumbent: "Tim Walz",                status: retiring}
+    - {state: nebraska,       party: republican, incumbent: "Jim Pillen",              status: running}
+    - {state: nevada,         party: republican, incumbent: "Joe Lombardo",            status: running}
+    - {state: new hampshire,  party: republican, incumbent: "Kelly Ayotte",            status: running}
+    - {state: new mexico,     party: democratic, incumbent: "Michelle Lujan Grisham",  status: term_limited}
+    - {state: new york,       party: democratic, incumbent: "Kathy Hochul",            status: running}
+    - {state: ohio,           party: republican, incumbent: "Mike DeWine",             status: term_limited}
+    - {state: oklahoma,       party: republican, incumbent: "Kevin Stitt",             status: term_limited}
+    - {state: oregon,         party: democratic, incumbent: "Tina Kotek",              status: running}
+    - {state: pennsylvania,   party: democratic, incumbent: "Josh Shapiro",            status: running}
+    - {state: rhode island,   party: democratic, incumbent: "Dan McKee",               status: lost_renomination}
+    - {state: south carolina, party: republican, incumbent: "Henry McMaster",          status: term_limited}
+    - {state: south dakota,   party: republican, incumbent: "Larry Rhoden",            status: running}
+    - {state: tennessee,      party: republican, incumbent: "Bill Lee",                status: term_limited}
+    - {state: texas,          party: republican, incumbent: "Greg Abbott",             status: running}
+    - {state: vermont,        party: republican, incumbent: "Phil Scott",              status: running}
+    - {state: wisconsin,      party: democratic, incumbent: "Tony Evers",              status: retiring}
+    - {state: wyoming,        party: republican, incumbent: "Mark Gordon",             status: term_limited}
+
+# =====================================================================================
+# SIG MARKET COVERAGE — measured live from GET /markets on 2026-10-02 (237 markets)
+# =====================================================================================
+sig_coverage:
+  measured_on: "2026-10-02"
+  total_markets: 237
+  control_markets: 4          # R/D x {U.S. Senate, U.S. House}. No governor-control market.
+  senate:
+    baseline_up_seats: 35
+    sig_markets: 34
+    missing_from_sig: [ohio]  # the Vance-seat special is NOT listed by SIG
+  governors:
+    baseline_up_seats: 36
+    sig_markets: 35
+    missing_from_sig: [ohio]
+  house:
+    total_seats: 435
+    sig_markets: 46           # battleground subset only
+  # *** THREE-WAY RACES: an Independent leg is listed, so the outcome space is NOT a 2-way
+  # complement. For chamber control this is worse than it looks: a winning independent's effect
+  # on control depends on WHICH PARTY THEY CAUCUS WITH, which is not knowable before the fact.
+  # chamber_model therefore treats these seats as control-INDETERMINATE (see baselines.py).
+  three_way_races:
+    - {chamber: Senate,   state: nebraska}
+    - {chamber: Senate,   state: montana}
+    - {chamber: Governor, state: rhode island}

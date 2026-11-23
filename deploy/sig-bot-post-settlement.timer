@@ -1,0 +1,13 @@
+# Fire post-settlement reconciliation after the 2026-11-04T17:00Z wall, with a straggler re-run next
+# morning. UTC (droplet pinned to UTC in the runbook). Persistent so a missed fire runs on wake.
+[Unit]
+Description=Run sig-bot post-settlement reconciliation after the settlement wall (UTC)
+
+[Timer]
+OnCalendar=2026-11-04 17:30:00
+OnCalendar=2026-11-05 09:00:00
+Persistent=true
+Unit=sig-bot-post-settlement.service
+
+[Install]
+WantedBy=timers.target

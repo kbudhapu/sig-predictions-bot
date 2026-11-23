@@ -1,0 +1,50 @@
+# THE TRADER — the single capital-spending process (settled process model: one trader, many
+# non-capital helpers). Adapted from mbappe deploy/trading-bot.service, PLUS the two safety nets
+# mbappe's scan flagged as missing: (1) a flock single-instance guard in ExecStart, (2) a systemd
+# WatchdogSec out-of-process dead-man. Named sig-bot.service because scripts/external_watchdog.py
+# already targets SERVICE_NAME=sig-bot.service.
+[Unit]
+Description=SIG Predictions Cup trading bot — TRADER (single capital process)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Type=notify + WatchdogSec = the TRUE out-of-process watchdog (safety net #2). systemd arms a
+# hardware-grade timer: the trader must sd_notify("WATCHDOG=1") at least every WatchdogSec/2 (~45s),
+# or systemd SIGABRTs + restarts it — catching a hang in ANY code path, not just the cycle loop
+# (mbappe's in-process thread could not).
+#   REQUIRES one module-side hook (owned by the orchestrator, NOT this deploy file): emit READY=1 at
+#   startup and WATCHDOG=1 each cycle. The exact 6-line hook is in deploy/README.md §"WatchdogSec".
+#   PHASE-1 fallback (hook not wired yet): comment the three notify lines below and set Type=simple
+#   so the unit still boots; flip to notify before go-live. The SIM-test step (runbook) catches a
+#   missing hook as a start-timeout.
+Type=notify
+NotifyAccess=main
+WatchdogSec=90
+
+WorkingDirectory=/opt/sig-bot
+# optional-dash: a missing .env must not wedge boot — the orchestrator refuses to trade without keys
+# with a clear error, which is the correct failure, not a systemd unit-load error.
+EnvironmentFile=-/opt/sig-bot/.env
+
+# Safety net #1 — flock single-instance guard (belt). `flock -n` fails fast if the lock is held, so a
+# hand-run `python main_sig.py run` can NEVER trade the same SIG account twice (double-spend defeats
+# the single-process capital arbiter). Suspenders: infra/single_instance.py takes a second flock
+# (data/sig-bot-run.lock) inside the process. The kernel frees both on death, so a systemd restart is
+# never blocked by a stale lock.
+ExecStart=/usr/bin/flock -n /var/lock/sig-bot-trader.lock /opt/sig-bot/.venv/bin/python /opt/sig-bot/main_sig.py run
+
+Restart=always
+RestartSec=10
+# Graceful stop: SIGINT lets the loop drain + release the SIG websocket before exit (avoids a
+# connection-cap storm on redeploy). Pre-flight reconciliation on the next cold start makes a crash
+# mid-trade safe regardless (sig/oms/ reconciles on boot).
+KillSignal=SIGINT
+TimeoutStopSec=30
+
+User=sig
+Group=sig
+SyslogIdentifier=sig-bot-trader
+
+[Install]
+WantedBy=multi-user.target

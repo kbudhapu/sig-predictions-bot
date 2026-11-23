@@ -1,0 +1,30 @@
+# SUPERVISOR — the separate in-repo supervisor PROCESS (long-running), distinct from the timer-fired
+# external watchdog (sig-bot-watchdog.*). This is liveness LAYER 3a: a continuously-running non-capital
+# process that watches the trader's SQLite heartbeat + reconcile freshness and escalates/pages. Does
+# NOT bind to the trader (must survive a trader crash to report it). Non-capital → no flock.
+#
+# Liveness layers for the trader (risk spec's "three"):
+#   1. in-process heartbeat thread (module code, writes the SQLite heartbeat)
+#   2. systemd WatchdogSec on sig-bot.service (TRUE out-of-process, restarts a hang)
+#   3a. this supervisor process (continuous)  +  3b. sig-bot-watchdog.timer (periodic, catches a
+#       startup crash before any monitor exists)
+[Unit]
+Description=sig-bot supervisor (continuous liveness monitor, non-capital)
+After=network-online.target sig-bot.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/sig-bot
+EnvironmentFile=-/opt/sig-bot/.env
+ExecStart=/opt/sig-bot/.venv/bin/python /opt/sig-bot/main_sig.py supervisor
+Restart=always
+RestartSec=15
+KillSignal=SIGINT
+TimeoutStopSec=20
+User=sig
+Group=sig
+SyslogIdentifier=sig-bot-supervisor
+
+[Install]
+WantedBy=multi-user.target

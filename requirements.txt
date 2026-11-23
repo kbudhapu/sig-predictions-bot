@@ -1,0 +1,8 @@
+# sig-bot runtime deps
+structlog>=24.1.0
+httpx>=0.27.0
+websockets>=12.0       # Supabase Realtime wire adapter (sig/feed/ws_adapter.py); Phoenix channels over WS
+pyyaml>=6.0            # every config loader imports `yaml` (sig/config.py, strategies/*/config.py, feed)
+# monitoring sidecar (optional — only needed to run api/main.py)
+fastapi>=0.110.0
+uvicorn>=0.29.0

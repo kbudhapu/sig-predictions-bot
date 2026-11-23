@@ -1,0 +1,23 @@
+# SIGNAL — non-capital research/signal process (fair-value, divergence, resolution edge → shared
+# SQLite for the trader to consume). Separate process per the settled model; places NO orders.
+# After= the trader is a soft start-ordering hint, not a hard bind.
+[Unit]
+Description=sig-bot research signal engine (non-capital)
+After=network-online.target sig-bot.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/sig-bot
+EnvironmentFile=-/opt/sig-bot/.env
+ExecStart=/opt/sig-bot/.venv/bin/python /opt/sig-bot/main_sig.py signal
+Restart=always
+RestartSec=10
+KillSignal=SIGINT
+TimeoutStopSec=20
+User=sig
+Group=sig
+SyslogIdentifier=sig-bot-signal
+
+[Install]
+WantedBy=multi-user.target

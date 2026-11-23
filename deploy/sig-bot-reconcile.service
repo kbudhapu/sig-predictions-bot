@@ -1,0 +1,15 @@
+# PERIODIC: continuous state reconcile (UTC) — replaces mbappe's ET pre-open/post-close cron. SIG
+# trades 24/7 so there are no sessions; this just keeps local state honest against the venue on a
+# fixed interval: positions vs SIG account, open-order reconcile, DB integrity. Oneshot, timer-fired.
+# Non-capital bookkeeping entry (main_sig.py reconcile); never places discretionary trades.
+[Unit]
+Description=sig-bot periodic state reconcile (positions/orders/DB vs SIG)
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/sig-bot
+EnvironmentFile=-/opt/sig-bot/.env
+ExecStart=/opt/sig-bot/deploy/scripts/periodic_job.sh reconcile
+User=sig
+Group=sig
+SyslogIdentifier=sig-bot-reconcile

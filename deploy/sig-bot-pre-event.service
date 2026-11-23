@@ -1,0 +1,16 @@
+# PERIODIC: pre-election-night position checks (UTC) — the SIG analogue of mbappe's ET pre-open job.
+# The only "event" in a 24/7 market is election night (Nov 3–4 2026) and the Nov 4 17:00Z settlement
+# wall (recon: all 237 markets settle at that one wall). This job, fired hourly across Nov 3–4, runs
+# the endgame readiness check: resolution-rules-table population, decided-gap scan, exposure/cutoff
+# sanity (what to hold into the freeze vs exit before cutoff). Oneshot; no discretionary trading.
+[Unit]
+Description=sig-bot pre-event (election-night) readiness check
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/sig-bot
+EnvironmentFile=-/opt/sig-bot/.env
+ExecStart=/opt/sig-bot/deploy/scripts/periodic_job.sh pre-event-check
+User=sig
+Group=sig
+SyslogIdentifier=sig-bot-pre-event

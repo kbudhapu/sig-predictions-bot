@@ -1,0 +1,693 @@
+# sig-bot master config (DEFAULT values; TUNE-LIVE per SIG_CONFIG_SCHEMA.md).
+# This module — the dynamic allocator (strategies/allocator) — reads `capital` and `allocator`.
+# Other modules extend this file with their own sections (sizing, risk, signal, …).
+
+capital:
+  max_deploy_frac: 0.85        # Σ edge budgets ≤ this (risk §2); keep a reserve
+  max_per_market_frac: 0.15    # position-level cap (risk gate owns enforcement)
+  max_cluster_frac: 0.25       # correlated-cluster cap (risk gate owns enforcement)
+  min_order_qty: 10            # [TUNE-LIVE] skip an exposure-ADDING order the gate clamped below this many
+                               #   shares — a 1-share order (common near zero cash) wastes one of the ~30
+                               #   writes/min for ~nothing. Reduce-only sells (exits/dust) are EXEMPT. 1 = off.
+  max_edge_frac: 0.40          # per-EDGE budget ceiling the allocator proposes within (propose-then-cap)
+  min_order_frac: 0.005        # [DEFAULT] schema §2 — don't place a bet below ~0.5% of bankroll
+  erroneous_max_order_notional: 100000.0  # [DEFAULT] schema §2 — Knight-Capital sanity ceiling; the risk
+                               # gate enforces this via risk.hard_notional_abs (same concept, kept in sync)
+
+allocator:
+  shrinkage_k: 20              # ~k observations before measured perf outweighs the prior (small-sample shrinkage)
+  decay: 0.97                  # per-observation exponential decay on the rolling window (newest weight 1.0)
+  rolling_window: 300          # max observations retained per edge
+  gamma: 0.5                   # sensitivity: measured_mult = clamp(exp(gamma·sharpe), mult_min, mult_max)
+  mult_min: 0.2
+  mult_max: 5.0
+  loss_attribution_cap: 0.5    # cap on loss_share penalty: penalty = 1 − min(loss_share, cap)
+  rebalance_interval_s: 10800  # cadence (3h) — rebalance on a clock, not per-trade
+  max_step: 0.20               # PAD step-cap: move ≤20% of the gap toward target per rebalance
+  core_floor_release_eps: 0.0005   # realized perf ≤ this over a full window ⇒ "dead" ⇒ floor lifts
+  core_floor_release_min_n: 150    # a "full window" of observations before a CORE floor can be released
+
+  # Mechanical-core-heavy prior (SIG_EDGE_PORTFOLIO_SPEC tiers). Priors sum to 1.0 → CORE 0.70 / SIGNAL 0.25 /
+  # TAIL 0.05. floor = the CORE income floor (arb/MM) that holds while the edge works. A DATALESS edge sits at
+  # its prior (never a vol-derived weight — the cold-start-bug guard).
+  edges:
+    arb:                     { tier: CORE,   prior: 0.30, floor: 0.15 }
+    market_making:           { tier: CORE,   prior: 0.30, floor: 0.15 }
+    resolution_mechanics:    { tier: CORE,   prior: 0.10, floor: 0.00 }
+    cross_market_divergence: { tier: SIGNAL, prior: 0.17, floor: 0.00 }   # +0.05 from joint_structure
+    # joint_structure DEMOTED SIGNAL/0.07 -> TAIL/0.02. Its edge rests on an UNMEASURED correlation
+    # (chamber_model.national_swing_rho): rho->0 and rho->1 give OPPOSITE signals from identical
+    # prices, and one national swing resolving on one day cannot estimate it. The 0.05 it gave up
+    # went to cross_market_divergence, whose edge is verifiable against real Polymarket prices.
+    # Promote this back only after strategies/chamber_model's scorecard proves out on logged data.
+    joint_structure:         { tier: TAIL,   prior: 0.02, floor: 0.00 }
+    order_flow:              { tier: SIGNAL, prior: 0.06, floor: 0.00 }
+    extremizing:             { tier: TAIL,   prior: 0.03, floor: 0.00 }
+    favorite_longshot:       { tier: TAIL,   prior: 0.02, floor: 0.00 }
+
+# Deterministic pre-trade GATE (strategies/risk_gate). ALL hard limits live here — the gate never
+# hardcodes one. Exposure caps reuse the `capital` block above (max_deploy / per_market / cluster).
+risk:
+  # Erroneous-order (Knight-Capital class) rejection — these are BUGS, not trades → REJECT, never clamp.
+  tick: 0.005                  # SIG price tick; a price off this grid is a bug
+  price_min: 0.005             # valid price band (inclusive)
+  price_max: 0.995
+  tick_tol: 1.0e-9             # float tolerance for the off-tick test
+  # SIZE OFF CAPITAL ONLY. The single fat-finger guard is a FRACTION of balance — no raw share-count
+  # ceiling (wrong unit: a cheap-price capital-sized order is millions of shares) and no absolute-$
+  # ceiling (does not scale: $100k is absurd once equity is $2M). This fraction scales with the bankroll.
+  hard_notional_frac: 1.0      # per-order notional > this × balance is absurd for ONE order
+
+  # Authorized-vs-accidental concentration (§3): the gate RE-DERIVES the sizing module's own ceiling
+  # from shared (ρ, τ) — so the AUTHORIZED endgame skyrocket passes while a runaway clamps to the ceiling.
+  all_in_cap_frac: 0.95        # §5 — never 100% into one scenario, even at the all-in limit
+  rho_min: 0.01                # clamp ρ into the Φ⁻¹-safe range (sizing §2.2)
+  rho_max: 0.99
+  tau_floor: 0.01              # caps the 1/√τ divergence in the final hours (sizing §2.2)
+  M_0: 1.1284                  # normalizes M ≈ 1 at the (ρ=1, τ=0.5) reference point (sizing §2.2)
+  M_full: 3.0                  # M at/above which authorized concentration may reach all_in_cap_frac
+
+# Position sizing (strategies/sizing) — SIG_TOURNAMENT_SIZING_SPEC.
+# NOTE: the Browne constants (rho_min/rho_max/tau_floor/M_0/M_full/all_in_cap_frac) are NOT repeated
+# here — sizing reads them from the `risk:` block above. The risk block states that the gate
+# "RE-DERIVES the sizing module's own ceiling from shared (ρ, τ)"; duplicating them would let the two
+# copies drift, and the gate would then re-derive a different ceiling than sizing computed, breaking
+# the authorized-endgame-vs-runaway distinction. One source of truth.
+sizing:
+  kelly_base_fraction: 0.25    # QUARTER-Kelly — the book-average fraction k(σ_p) is calibrated to produce
+  M_cap: 10.0                  # hard ceiling on M after tau_floor (the 1/√τ divergence backstop, §5)
+
+  # k(σ_p): the per-position Kelly fraction, DECREASING in σ_p (§2.1a Baker–McHale). Piecewise-linear
+  # over the grid; flat at k_grid[0] below sigma_grid[0] and at k_grid[-1] above sigma_grid[-1].
+  # Calibrated so σ_p == k_reference_sigma gives exactly kelly_base_fraction (quarter-Kelly) — quarter is
+  # the AVERAGE a mixed-confidence book produces, not a uniform floor (§2.1a).
+  sigma_grid: [0.02, 0.06, 0.12, 0.25]
+  k_grid:     [0.50, 0.25, 0.10, 0.04]
+  k_reference_sigma: 0.06
+  k_missing_sigma: 0.0         # NO reported σ_p ⇒ maximally uncertain ⇒ zero size (§6, absolute)
+
+  # ── PER-TIER KELLY AGGRESSIVENESS (catch-up posture) ──────────────────────────────────────────
+  # We are BEHIND; the Browne model says size UP on a PROVEN edge (rank-maximization needs variance).
+  # `kelly_multipliers` scales the base k(σ_p) per edge PROVENNESS — base k≈0.25 (quarter) at the
+  # reference σ_p, so ×4 ⇒ ~full Kelly and ×8 ⇒ ~double. It applies ONLY to the directional/Browne
+  # sizing path (strategies/sizing via SizingAdapter); arb and market-making size via their OWN knobs
+  # (arb_sizing.*, market_making.*), raised there. Unmatched edges fall to `default` (kept small).
+  # SAFETY: the per-market / deploy / exit-liquidity caps STILL BIND downstream in the gate — raising
+  # Kelly raises the TARGET, the caps remain the backstop (§5: shrink first, cap last).
+  kelly_multipliers:
+    cross_market_divergence: 4.0   # PROVEN vs the sharp Polymarket benchmark on high-confidence races → full Kelly
+    order_flow: 1.0                # UNPROVEN directional → stays quarter-Kelly until it shows edge live
+    resolution: 1.0               # keep small until validated
+    default: 1.0                   # anything unproven stays conservative
+  kelly_frac_ceiling: 2.0       # max fraction-of-edge-budget the directional sizer may TARGET. Lets a
+                                #   proven edge reach DOUBLE Kelly when behind; an edge whose multiplier
+                                #   is ≤1 is still capped at 1.0 (full budget) so unproven never doubles.
+                                #   The gate's per-market/deploy caps bind on top of this.
+
+  # Edge-REALITY gate (§2.1, §5) — positive is NOT enough; the estimate must be trustworthy.
+  min_edge_f: 0.01             # f* at/below this is noise, not edge
+  max_sigma_to_act: 0.20       # σ_p above this ⇒ treat as noise ⇒ zero, whatever f* says
+  min_impact_adjusted_f: 0.005 # never size past the depth where the impact-adjusted edge dies (§2.1b)
+  min_quantity: 1              # integer contracts; below one contract there is no order
+
+  # Correlated-book scaling (§2.1) and the endgame override (§2.3).
+  default_factor_loading: 0.7  # assumed shared national-swing loading when none is supplied
+  endgame_tau: 0.15            # τ at/below which the override may engage (with M>1 and ρ<1)
+  endgame_min_confidence_sigma: 0.08  # concentrate ONLY onto estimates at least this confident (§2.3)
+
+# Market-making (strategies/market_making) — CORE tier spread capture. The quote is SMALL, two-sided
+# and UNIFORM (bid_size == ask_size == quote_size) and is deliberately NOT edge-scaled: inflating MM
+# quote size to chase a big fair-value gap re-creates the directional blowup we already fixed.
+# Directional/signal edge belongs to the Browne conviction sizer (strategies/sizing), NOT to inflated
+# MM quotes. This section holds the ONE MM size knob so it is tunable live without a code change.
+market_making:
+  # ── SIZE = A PERCENTAGE OF CAPITAL. There is NO fixed maximum size anywhere in MM. ──
+  # Every bound below is a FRACTION — of equity, or of the market's own depth — so each scales. A
+  # fixed share ceiling is what kept the bot quoting 100 shares: $2 of risk at 0.02 and $95 at 0.95.
+  # No absolute number can be right across prices spanning 0.005-0.995 or across a changing bankroll.
+  #
+  #   quote_capital = min(mm_capital_frac x equity / active_markets, mm_max_quote_frac x equity)
+  #   shares        = quote_capital / price          <- same $ committed at ANY price
+  #   if depth known: shares = min(shares, max_frac_of_depth x depth)
+  #
+  # NOT edge-scaled, which is a DIFFERENT question from capital-%: "what % of my money per quote"
+  # is correct; "bet more when I think I'm right" turns MM into a directional bet (the +430%
+  # bag-hold, the 13,144-contract blowup). Conviction belongs to `sizing:` (Browne), never here.
+  mm_capital_frac: 0.80        # [TUNE-LIVE] fraction of equity allocated to MM, split across the
+                               #   markets actually quoted this cycle. RAISED 0.30→0.65: MM is the
+                               #   functional strategy and ~80% of capital sat idle, and it now quotes
+                               #   only FRESH books (the stale-price quoting that produced the
+                               #   directional bag-holds is fixed). THIS IS THE DEPLOYMENT LEVER, and
+                               #   it is meant to be reversed as directional scales up.
+                               #   RAISED 0.65 -> 0.80 once the WS covered all 237 markets: spread
+                               #   across the full board a quote is 0.80/237 = 0.34% of equity, so
+                               #   the 5% per-market cap is ~15x away from binding and the extra
+                               #   deployment buys breadth, not concentration. ~20% is left for arb
+                               #   and directional. If quotable markets ever collapse, the per-market
+                               #   cap binds first and the sleeve under-deploys — by design.
+                               #   Doubling equity doubles every quote — nothing here is a fixed size.
+  mm_max_quote_frac: 0.08      # [TUNE-LIVE] per-quote ceiling, ALSO a fraction of equity. RAISED
+                               #   0.04→0.08 so a single quote can be fuller when few markets are
+                               #   quotable. The HARD bound stays mm_max_inventory_frac below.
+  mm_max_inventory_frac: 0.05  # [DEFAULT/TUNE-LIVE] HARD per-market inventory cap, ALSO a fraction
+                               #   of equity (converted to shares at each market's price each cycle).
+                               #   DELIBERATELY NOT RAISED alongside the two levers above. This is the
+                               #   concentration guard: it is what stops a bigger MM sleeve becoming
+                               #   one directional bag-hold (cf. the +453% / -6045-share positions).
+                               #   Deployment is meant to come from MORE MARKETS, not more per market.
+                               #   It BINDS BY DESIGN when few markets are quotable: at 27 quotable
+                               #   markets a quote is min(0.65/27, 0.08) = 2.4% of equity and the 5%
+                               #   cap allows ~2 quotes' worth of inventory; at 5 quotable markets the
+                               #   per-quote ceiling (8%) exceeds the cap, so the cap binds on the
+                               #   first fill and pulls the adding side. That is the correct outcome —
+                               #   under-deploy rather than concentrate.
+                               #   At the cap the ADDING side is pulled entirely and only the
+                               #   reducing side quotes.
+  max_frac_of_depth: 0.25      # [DEFAULT/TUNE-LIVE] the one non-capital bound, and MARKET-relative
+                               #   not fixed: you cannot fill or exit more than the book holds.
+                               #   Applied ONLY when real depth is known — when it is unknown the
+                               #   bound is SKIPPED, never replaced by a constant (a constant would
+                               #   be a fixed maximum in disguise, and since depth is not in the
+                               #   prices table it would bind on every quote in production).
+  # ── ORDER-VOLUME CONTROLS: the only lever that actually shortens the cycle ──
+  # Probe result (live): the venue serialises at ~4.5-8.7s PER ORDER whether orders are sent
+  # serially, batched (POST /orders/batch, 5 and 25 both returned 503 at ~4.2-4.5s/order, scaling
+  # LINEARLY) or concurrently (6 in parallel = 8.7s/order effective, worse). Transport cannot fix
+  # the ~47min cycle; only sending FEWER orders can. 157 orders/cycle x ~4.5s = ~12min of
+  # irreducible venue time at best.
+  max_quote_age_s: 120        # [TUNE-LIVE] quote ONLY markets whose price row is fresher than this.
+                              #   Biggest lever and not a tradeoff: the MM was quoting ~250 markets,
+                              #   so most quotes were priced off dead books. Unknown age counts as
+                              #   STALE (fail closed).
+                              #   SET FROM MEASUREMENT, not taste. Live age histogram of the 237
+                              #   price rows (2026-10-02 06:56Z):
+                              #        0- 15s:  12      60-120s:  20
+                              #       15- 30s:  32     120-300s:   5
+                              #       30- 60s:  21        >600s: 147  <- frozen, no live feed
+                              #   RAISED 30 -> 45 once the WS covered all 237 markets. On a PUSH
+                              #   feed updated_at is the last CHANGE, not the last CONFIRMATION: a
+                              #   book that has not moved sends nothing, so a tight cutoff rejects
+                              #   markets whose prices are perfectly valid. What actually bounds our
+                              #   knowledge is feed.rest_safety_net_interval_s (30s), which
+                              #   re-confirms every market; this sits just above it so the whole
+                              #   board is quotable while anything genuinely unconfirmed is not.
+                              #   SET FROM THE AGE THE MM ACTUALLY SEES, measured in production
+                              #   (mm_market_selection age_min_s/age_max_s):
+                              #        typical 5.9 / 8.1 / 8.5 / 18.9s, worst observed 40.2s
+                              #   There is no event-loop block to compensate for: price_pump_starved
+                              #   never fired, and the cycle is 0.9-1.5s typical. The earlier 150s
+                              #   was masking only the occasional cycle SPIKE (one 66.8s cycle),
+                              #   during which the snapshot ages past a tight cutoff.
+                              #   SETTLED AT 120s. The binding constraint is not venue staleness
+                              #   but CYCLE LENGTH: the MM's snapshot ages while a cycle runs, and a
+                              #   cycle that places orders is venue-paced (writes serialise at
+                              #   ~4.5-8.7s each) — measured p50 12.6s, max 66.8s, and 161.3s
+                              #   earlier. At a 60s cutoff that produced quotable=0 on 4 of 9
+                              #   cycles: it fails closed, but it drops the whole board for those
+                              #   cycles. 45s is NOT viable for the same reason, only worse.
+                              #   120s covers 20s of REST sweep plus ~100s of cycle-induced lag and
+                              #   still sits 5x below the dark signature (frozen rows were >600s).
+                              #   This comes DOWN when cycle spikes come down, which is an order-
+                              #   throughput problem (venue-bound), not a freshness one.
+                              #   Every row shares one timestamp per REST sweep, so this is
+                              #   all-or-nothing per cycle — margin matters more than tightness.
+                              #   Keep this comfortably > feed.rest_safety_net_interval_s.
+                              #   NOTE: also stay well above the price pump's own period
+                              #   (feed.price_stale_after_s / 3 = 5s) or the MM starves on pump lag.
+  cadence_s: 30               # [DEFAULT/TUNE-LIVE] MM re-evaluation cadence. A full re-quote sweep
+                              #   is the most expensive thing the bot does, so it must not run at
+                              #   the fast arb cadence (loops.fast_loop_interval_s = 5s).
+  requote_threshold: 0.10     # [DEFAULT/TUNE-LIVE] cancel-replace a resting quote only once it has
+                              #   drifted this far from the touch (was 0.05). Each cancel AND each
+                              #   replacement is a separate venue round-trip, so halving the churn
+                              #   halves that cost. Widen further if re-quote volume is still high.
+  min_quote_size: 10           # [DEFAULT] a FLOOR in shares (not a maximum): a 2-share order wastes
+                               #   one of the 30 writes/min at any price.
+  quote_k: 0.015               # [TUNE-LIVE] half-width we TRY to rest inside the mid (clamped to the live
+                               #   touch). Smaller = tighter = more fills, less captured spread per fill.
+  join_when_tight: true        # [TUNE-LIVE] when the spread is too tight to rest INSIDE (1-2 ticks, the
+                               #   common case), JOIN the touch (post at best_bid/best_ask) instead of
+                               #   posting NOTHING. This was the 1%-fill-rate cause: MM suppressed itself on
+                               #   the tight-spread markets where the trading actually happens, despite
+                               #   earning +exec_edge when it did fill. Adverse monitor + skew manage risk.
+
+  # ── INVENTORY SKEW: shed, don't accumulate (Avellaneda-Stoikov lean-against-inventory) ──
+  size_skew_strength: 0.6      # [DEFAULT/TUNE-LIVE] SIZE asymmetry at full cap: reducing side
+                               #   x(1 + 0.6*frac), adding side x(1 - 0.6*frac), linear in inventory
+                               #   and symmetric about flat. Price skew alone only makes the reducing
+                               #   side more LIKELY to fill; this makes it fill BIGGER, which is what
+                               #   actually sheds inventory instead of leaning into it.
+  skew_ticks_at_cap: 4.0       # [DEFAULT/TUNE-LIVE] PRICE shift in ticks at full cap (both sides
+                               #   move against the inventory: long => quotes move down to offload).
+
+# Realtime market-data feed (sig/feed) — the WebSocket ingester keeping infra/state fresh (SIG_FEED_SPEC).
+feed:
+  token_ttl_s: 10800            # the realtime JWT lifetime (3h)
+  token_refresh_lead_s: 300.0   # refresh + reconnect this long BEFORE expiry (no forced mid-session outage)
+  reconnect_backoff_base_s: 1.0 # exponential reconnect backoff (ported mbappe discipline — don't storm)
+  reconnect_backoff_factor: 2.0
+  reconnect_backoff_cap_s: 60.0
+  reconnect_reset_after_s: 120.0  # a connection stable this long resets the backoff to base
+  price_stale_after_s: 15.0     # readers/risk-gate treat a price older than this as STALE (feed keys this)
+  snapshot_max_ids_per_call: 50
+  rest_safety_net_interval_s: 90  # [TUNE-LIVE] slow REST batch poll that runs ALONGSIDE the WS.
+                            #   WS is primary (push = freshest, zero read-budget cost); this only
+                            #   covers WS's blind windows: the ~67s cold-start subscribe and any
+                            #   reconnect/venue flap, plus a sanity heartbeat for a market WS
+                            #   quietly stopped updating. 474 ids / 50 per call = 10 reads per
+                            #   sweep => ~20 reads/min of the 100/min budget at 30s.
+                            #   This interval is also the CONFIRMATION BOUND for the whole board:
+                            #   WS push only fires when a book CHANGES, so a market that has not
+                            #   moved sends nothing and its updated_at ages even though its price is
+                            #   perfectly valid. This poll is what guarantees every market is
+                            #   re-confirmed within the interval, so it must stay BELOW
+                            #   market_making.max_quote_age_s or quotable collapses to just the
+                            #   markets that happened to tick (measured: 228 of 237 sat in the
+                            #   60-120s band on a 60s net, leaving ~9 quotable). 0 disables it. # /exchanges/prices batches ~50 ids per REST call (rate-limit-aware refetch)
+
+# ── The sections below (SIG_CONFIG_SCHEMA §1,4,5,6,7,8) are consumed by modules still being built.
+#    They ship with sane DEFAULTs so the bot runs on launch; [TUNE-LIVE] items need live field data. ──
+
+# §1 GLOBAL / MODE
+global:
+  # SAFE DEFAULTS. The LIVE state (mode: LIVE, tournament_slug, strategy enables, markets) lives in the
+  # gitignored config/sig.local.yaml overlay (deep-merged over this file at load), so NO git operation can
+  # revert the droplet to SIM or drop an override. See config/sig.local.yaml.example and sig/config.py.
+  mode: SIM                    # [DEFAULT] SIM (SimulatedBroker) — overridden to LIVE only by the local overlay
+  tournament_slug: ""          # [TUNE-LIVE] from GET /tournaments (set in the local overlay for live)
+  competition_start_utc: "2026-10-01T16:00:00Z"  # [DEFAULT] drives τ (time-fraction-remaining)
+  cutoff_utc: "2026-11-04T16:00:00Z"             # [DEFAULT] competition end (noon ET)
+
+# §4 LOOPS / CADENCE / WRITE-BUDGET (integration)
+loops:
+  fast_loop_interval_s: 5        # [DEFAULT] arb-watch cadence (bounded by the read limit)
+  slow_loop_interval_s: 300      # [DEFAULT] strategy re-evaluation cadence
+  writes_per_min_per_key: 30     # [FIXED] hard SIG limit (the outbound write-gate)
+  reads_per_min_per_key: 100     # [FIXED] hard SIG limit
+  arb_write_reservation_frac: 0.4  # [DEFAULT] write-window fraction reserved for the fast/arb loop
+  n_keys: 1                      # [DEFAULT] start 1; up to 3 (fast/strategy/overflow)
+  verify_by_reread: true         # [FIXED] each loop re-reads state from disk at cycle top (disk is truth)
+  dead_man_threshold_s: 300   # [TUNE-LIVE] dead-man staleness threshold. The engine heartbeat beats
+  placement_batch_max_legs: 10  # [TUNE-LIVE] group up to N MM quotes into ONE POST /orders/multi-leg
+                            #   call. 0 or 1 = off (one venue call per quote).
+                            #   WHY: the binding constraint is the 30 writes/min budget, not latency.
+                            #   Measured live 2026-10-02: 10 independent legs in one call = 1.47s
+                            #   (0.15s/order) vs 0.53s/order serial — but the real gain is that ONE
+                            #   write carries TEN orders, so the same budget places ~10x the quotes.
+                            #   SIG caps multi-leg at 10 legs and rejects duplicate legs for the same
+                            #   exchange (400, nothing placed), so groups are <=10, one per exchange.
+                            #   ALL-OR-NOTHING: every leg is validated before any executes and one
+                            #   off-tick price kills the group — prices are snapped to the 0.005 grid
+                            #   first, and a failed group falls back to one-at-a-time.
+                            #   Only plain MM quotes are grouped: arb keeps its atomic semantics and
+                            #   directional/order-flow use chase/accept-partial policies where a
+                            #   shared bundle would change partial-fill handling. MM is leave_resting,
+                            #   so a bundle of independent quotes is safe (the unfilled-timeout sweep
+                            #   skips leave_resting bundles; sibling-unwind is arb-only).
+  placement_worker: true      # [TUNE-LIVE] ENABLED 2026-10-02. true = the cycle only EVALUATES and
+                            #   enqueues intents, and ONE sequential worker drains the queue at
+                            #   venue pace. The cycle becomes compute-only (~1-3s) instead of
+                            #   issuing every intent inline, which is where 60-160s cycles came from
+                            #   (237 quotable markets x one round-trip each) and why exits and
+                            #   directional queued behind the whole MM burst.
+                            #   CAPITAL INVARIANT: the WORKER calls begin_cycle once per drain
+                            #   batch, not the cycle. begin_cycle RESETS reservations, so leaving
+                            #   reserve in the cycle while submitting off-cycle would wipe
+                            #   reservations under in-flight submits. The worker does the whole path
+                            #   (size -> gate -> reserve -> OMS -> broker) strictly one at a time,
+                            #   so it is the only reserver and the no-double-spend guarantee holds;
+                            #   the unit of capital accounting becomes the batch, not the cycle.
+  placement_intent_ttl_s: 30  # [TUNE-LIVE] drop a queued intent older than this instead of placing
+                            #   it. A quote priced off a book we last saw 30s+ ago is the stale-quote
+                            #   mistake the fresh-only MM filter exists to prevent.
+                            #   ONCE PER CYCLE, so this must cover the worst legitimate cycle, not
+                            #   fast_loop_interval_s. A cycle that places orders is paced by the
+                            #   VENUE (it serialises writes at ~4.5-8.7s each), so a busy cycle runs
+                            #   to ~160s: measured p50 2.8s, max 161.3s. The derived default
+                            #   (tick 5s x 2 = 10s) fired continuously, and a dead-man that always
+                            #   cries wolf is not a safety device. 300s is ~2x the worst observed,
+                            #   so a genuinely hung cycle is still caught within 5 minutes.
+
+# §5 ARB PATH (fast loop — near-riskless, skips Browne/Layer-B)
+arb:
+  arb_min_violation: 0.02        # [DEFAULT] min constraint violationAmount worth capturing (after cost)
+  arb_max_capital_frac: 0.20     # [STALE — NOT READ BY ANY CODE PATH. The enforced total-arb budget is
+                                 #   arb_sizing.arb_total_max_frac below. This key appears only in
+                                 #   sig/config.py's schema; left in place so removing it is a decision
+                                 #   rather than a side effect, but DO NOT tune it expecting an effect.]
+  arb_atomic_only: true          # [FIXED] multi-leg fills atomically or aborts — never a naked leg
+  arb_fillability_check: true    # [FIXED] confirm orderbook depth before firing
+
+# §4b CHAMBER MODEL (strategies/chamber_model) — joint-control structure.
+# ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+# │ EVERYTHING IN THIS BLOCK EXCEPT THE TIER/SIZE CEILING IS AN UNPROVEN ASSUMPTION.            │
+# │ The FACTS live in config/chamber_baselines.yaml (sourced + re-derived on load). This block  │
+# │ is the MODEL, and the model is a hypothesis under test — not a result.                      │
+# └─────────────────────────────────────────────────────────────────────────────────────────────┘
+# Why the caution is not boilerplate: every race shares the one national-swing factor, so a wrong
+# rho biases EVERY race the same way at once. That is the opposite of a diversified book, and it
+# is indistinguishable from a working model until the single Nov-3 resolution.
+chamber_model:
+  national_swing_rho: 0.35          # [HYPOTHESIS — THE LOAD-BEARING GUESS] common-factor correlation
+                                    #   between races. NOT measured and NOT estimable from one
+                                    #   election. rho→0 ⇒ seat totals concentrate ⇒ model calls any
+                                    #   mid control price a mispricing; rho→1 ⇒ totals go bimodal ⇒
+                                    #   model calls the opposite. 0.35 is a mid-range placeholder,
+                                    #   chosen to be defensible, not because it is right. ALWAYS read
+                                    #   rho_sensitivity in the signal log before believing an output.
+  min_divergence_to_flag: 0.10      # [DEFAULT] |model − market| below this is noise, not a signal.
+                                    #   Deliberately wide: the model's own error exceeds a few points.
+  min_observations_before_sizing: 200   # [POLICY] log-only until this many signals exist. This is the
+                                    #   prove-then-size brake — it cannot be set below 1.
+  max_size_multiplier: 0.05         # [POLICY] hard ceiling even once released. signal.py REJECTS any
+                                    #   value above 0.25, so making this edge large needs a reviewed
+                                    #   code change, not a config edit.
+  tier: TAIL                        # [POLICY] signal.py refuses to load unless this is TAIL.
+  enabled_for_sizing: false         # [POLICY] master switch, OFF. Signals are produced and logged;
+                                    #   none can be traded until a human flips this deliberately.
+  assume_unpriced_held_by_incumbent_party: false   # [HYPOTHESIS] fill unpriced seats (SIG lists no
+                                    #   Ohio Senate special) with "the holder keeps it". Using it
+                                    #   still marks the estimate DEGRADED ⇒ log-only. Default off.
+  quadrature_nodes: 65              # [DEFAULT] swing-factor integration grid; exact convolution
+                                    #   conditional on the node, so this is the only discretisation.
+
+# §5a ARB SIZING (strategies/arb_sizing) — many smaller concurrent arbs, not ~3 maximal ones.
+# capital.max_per_market_frac (0.15) is a DIRECTIONAL limit: it bounds what one view about the world
+# may lose. A hard arb is not a view — it is a bought spread whose payoff is contracted at entry — so
+# sizing it directionally put 30% of the bankroll in a 2-leg basket and the deploy cap then admitted
+# only ~3 concurrent arbs, discarding every further edge for want of capital. Arb is instead bounded
+# BELOW by cost efficiency (too small and fees+slippage eat the edge) and ABOVE by exit liquidity (a
+# leg the bids cannot absorb cannot be recycled — see §5b). The per-arb cap then sets how many fit.
+arb_sizing:
+  arb_max_per_arb_frac: 0.08        # [DEFAULT/TUNE-LIVE] basket notional ceiling vs bankroll. Replaces
+                                    #   the 0.15 DIRECTIONAL per-market cap for arb orders only.
+                                    #   0.08 of 0.85 deployable => ~10 concurrent full-size arbs.
+                                    #   NOTE: kept BELOW the directional cap (0.15) — a tested invariant
+                                    #   (arb orders clamp tighter). "Size arb up" is served by the high
+                                    #   arb_total_max_frac (0.85, many concurrent riskless arbs), not by
+                                    #   letting one arb exceed the directional cap.
+  arb_total_max_frac: 0.85          # [DEFAULT] ALL open arb notional vs bankroll. Matches
+                                    #   capital.max_deploy_frac, so the 15% cash reserve is preserved
+                                    #   and arb can never crowd out the reserve.
+  arb_min_notional: 250.0           # [DEFAULT] absolute floor — below this the round trip is not worth
+                                    #   the write budget or the book impact, whatever the edge looks like.
+  arb_min_edge_to_cost_ratio: 3.0   # [DEFAULT/TUNE-LIVE] captured edge must be >= 3x the estimated
+                                    #   round-trip cost. This is the real floor: it scales with the
+                                    #   actual book, where a fixed notional floor does not.
+  arb_fees: 0.0                     # [DEFAULT] fractional fee per 1.0 of notional PER SIDE (SIG charges
+                                    #   none today; keep in step with exit.fees and relationship_engine).
+  arb_max_frac_of_exit_depth: 0.25  # [DEFAULT/TUNE-LIVE] a leg may be at most this fraction of the bid
+                                    #   depth it would have to exit into. Measured depth ranges ~134 to
+                                    #   ~64k contracts, so this is what keeps thin races small.
+
+# §5b ARB EXIT PATH (strategies/exit) — recycle capital out of WINNING baskets instead of holding
+# every one to the settlement wall. ~$85k deployable / ~$30k per full-size basket = ~3 trades if we
+# never exit; the leaderboard runs 30+. But a hard arb's unrealised profit is CONTRACTED, not at
+# risk, so exiting early FORFEITS a guaranteed payoff. Exit only when (A) the freed capital's
+# return-per-day in the best live alternative beats the FORFEIT's return-per-day by
+# min_recycle_advantage, AND (B) the bids can absorb the whole basket. Fail either ⇒ HOLD.
+# The forfeit is the exact one — remainder + fee_cost + slippage — because the exit costs both
+# shrink the cash the exit returns AND enlarge what exiting gives up (strategies/exit/decision.py).
+exit:
+  fees: 0.0                      # [DEFAULT] fraction per 1.0 of BASKET — SAME convention and SAME
+                                 #   value as strategies/relationship_engine DEFAULT_FEES. Entry and
+                                 #   exit must agree or a basket entry priced as profitable can be
+                                 #   exited at a fee entry never charged. If SIG ever exposes a fee,
+                                 #   change it in BOTH places.
+  min_recycle_advantage: 0.25     # [DEFAULT/TUNE-LIVE] recycle_per_day must beat remainder_per_day by
+                                 #   25%. A dead heat MUST hold: an exit pays spread + fees twice, so
+                                 #   a marginal exit is strictly worse than doing nothing. Relative,
+                                 #   not dollars, so one number governs a $500 and a $30,000 basket.
+  liquidity_safety_margin: 0.25   # [DEFAULT/TUNE-LIVE] slippage × (1+margin) must stay under the
+                                 #   pre-slippage gain ⇒ slippage ≤ 80% of it. The walked book is a
+                                 #   snapshot; a level can vanish before the sells land.
+  min_realizable_gain: 25.0       # [DEFAULT] absolute $ floor — below this the order-path round trip
+                                 #   and the write budget it consumes are not worth it.
+  days_to_settlement_floor: 0.25  # [DEFAULT] floors the 1/days divergence (same spirit as
+                                 #   risk.tau_floor). Inside the last 6h the remainder's implied
+                                 #   daily rate would otherwise → ∞ for arithmetic, not economic,
+                                 #   reasons.
+  alternative_horizon_days: 5.0   # [DEFAULT/TUNE-LIVE] expected days for the NEXT opportunity to
+                                 #   realise its edge; capped at days_to_settlement in code. This is
+                                 #   what makes the rule clock-aware. Set it ≥ the competition length
+                                 #   to recover the strictly-conservative "the alternative is also
+                                 #   held to the wall" reading (then the days cancel and recycling
+                                 #   can only win on a bigger edge).
+  settlement_utc: "2026-11-04T17:00:00Z"  # [DEFAULT] every market in this tournament settles at this
+                                 #   one instant. NOTE: deliberately distinct from global.cutoff_utc
+                                 #   (16:00Z) — that is the competition scoring cutoff, this is when
+                                 #   the contracts actually pay. The remainder is earned to THIS one.
+
+# §5c DIRECTIONAL EXIT (sig/engine/orchestrator._run_takeprofit_exits) — the TRAILING STOP for HELD
+# single-leg DIRECTIONAL / signal positions, including market-making DRIFT (a two-sided quote that
+# filled and then the market ran). This is NOT the arb exit above: a hard arb's unrealised profit is
+# CONTRACTED and rightly held to the settlement wall, but a directional winner's profit is AT RISK and
+# is given back in full on a reversal if it is never sold. The previous rule was a fixed +100%
+# take-profit, which capped winners: a +453% runner was sold at +100%, leaving +353% on the table.
+# The trailing stop lets a winner RUN as high as it climbs and sells only when it pulls back FROM ITS
+# PEAK — capturing the run AND protecting the gain. Arb baskets are routed around this (held to settle).
+directional_exit:
+  trail_arm_pct: 0.5   # [DEFAULT/TUNE-LIVE] ARM the trailing stop once the PEAK gain reaches +50%.
+                       #   Below the arm, a position is NOT trailed (only stop_loss_pct protects it) —
+                       #   don't shake a barely-green position out on noise; let it get meaningfully
+                       #   green first. Arming keys off the PEAK, so a position that armed and then
+                       #   pulled back stays armed.
+  trail_pct: 0.2       # [DEFAULT/TUNE-LIVE] SELL when the current gain gives back this fraction OF THE
+                       #   PEAK gain. Semantics are "fraction of the peak", NOT percentage points:
+                       #   peak +453% -> sell below +453%*(1-0.2) = +362.4%; peak +50% -> sell below
+                       #   +40%. The trigger trails UP as the peak ratchets up, so a still-climbing
+                       #   winner is HELD and only a genuine pullback from the high sells it.
+  stop_loss_pct: 0.20  # [TUNE-LIVE] cut an outright LOSER at -20% of REAL entry (avgCost). Tightened
+                       #   from -50%: live positions bled to ~-24% without ever reaching -50%, so the
+                       #   stop never fired (only the trailing take-profit did). -20% cuts a genuine
+                       #   directional drift early. Measures REAL P&L (avgCost is live, not 0.0).
+                       #   DIRECTIONAL / MM-drift ONLY — arb basket legs are EXEMPT (held to settlement;
+                       #   a mid-flight mark loss on a hedged leg is meaningless, the pair settles to 1.00).
+                       #   Independent of the trailing stop: protects a position that never armed.
+  exit_check_interval_s: 45  # [DEFAULT/TUNE-LIVE] the stop/trail check runs on its OWN timer at this
+                       #   cadence, NOT once per trading cycle. A cycle takes ~47 min (the MM places
+                       #   and cancels hundreds of orders at 5-14s per call), so a cycle-bound 20%
+                       #   stop behaved like a ~30% one: a position was observed sitting at -30.1%
+                       #   until the next pass came round, ~47 min later. The check needs one
+                       #   positions read plus arithmetic, so it is cheap to run often. Both callers
+                       #   share a lock, and the per-position pending-bundle guard still applies, so
+                       #   a position can never be double-closed.
+
+# §5d ORDER-FLOW (SIGNAL tier, strategies/order_flow via sig.engine.live_strategies.CoreOrderFlowStrategy).
+# A directional FADE edge: read order-book depth imbalance (the live flow proxy — SIG has no market-wide
+# trade tape), fade one-sided EXTREMES that OPPOSE the informed view (short-window realized mid momentum
+# until cross-market/fair-value is live), and NEVER fade informed/unconfirmed flow (the module's safety).
+# Capital share = the allocator `order_flow` prior (0.06); CONVICTION/aggressiveness = k_reference_sigma.
+order_flow:
+  enabled: false            # [MASTER SWITCH] SAFE DEFAULT (off). LIVE enable lives in the gitignored config/sig.local.yaml overlay.
+  stream_sizes: false       # [FEED] false ⇒ book depth comes from bounded /orderbook REST (the WS feed is NBBO-only,
+                            #   carries no top-of-book SIZE — verified live 2026-10-02). true would gate the REST pump off
+                            #   and read sizes from the price stream, but the stream never populates them, so order_flow
+                            #   goes inert. Keep false until a feed-side fix delivers book frames WITH quantities.
+  markets: [843, 842, 841, 840, 948, 947, 983, 856]  # [FEED] the bounded /orderbook poll set — the most liquid headline
+                            #   races (Senate R/D, House R/D, GA Senate R/D, TX Senate R, GA Gov R) where depth-imbalance
+                            #   carries information. Thin markets' imbalance is noise, so we do NOT scan the full universe.
+                            #   ~8 markets × 1 read / book_poll_interval_s ⇒ ~8 reads/min, well inside the 100/min budget.
+  k_reference_sigma: 0.25   # [DEFAULT/TUNE-LIVE] conviction → sigma_p for the directional Browne sizer.
+                            #   SMALLER ⇒ larger Kelly fraction ⇒ more aggressive size. This is the size knob.
+  extreme_threshold: 0.6    # [DEFAULT/TUNE-LIVE] |book imbalance| at/above this is a one-sided extreme.
+  window_seconds: 60.0      # [DEFAULT/TUNE-LIVE] rolling flow window (how long depth pressure is averaged).
+  min_volume: 200.0         # [DEFAULT/TUNE-LIVE] minimum windowed depth before the imbalance is trusted.
+  min_trades: 3             # [DEFAULT/TUNE-LIVE] minimum depth samples (≈ cycles) before acting.
+  momentum_window_s: 45.0   # [DEFAULT/TUNE-LIVE] lookback for the realized-move informed reference.
+  momentum_min_move: 0.01   # [DEFAULT/TUNE-LIVE] minimum |mid move| to count as an informed direction;
+                            #   below it the extreme is UNCONFIRMED and is NOT faded (needs confirmation).
+  min_confidence: 0.3       # [DEFAULT/TUNE-LIVE] drop fade signals below this confidence (0..1).
+  max_markets: 8            # [DEFAULT/TUNE-LIVE] cap on markets scanned per cycle (orderbook reads are
+                            #   rate-limited: 100 reads/min/key — keep the scanned set small). Matches the `markets` list.
+  book_poll_interval_s: 60  # [DEFAULT/TUNE-LIVE] cadence of the SEPARATE order-book depth task. Depth
+                            #   is ~max_markets serial venue reads at ~4-8s each, so it used to run
+                            #   inside the price pump and froze the MM's price snapshot (quotable=0)
+                            #   plus tripped the 10s dead-man watchdog. Own task now; this is its pace.
+
+# Stale-quote sniper: when a SIG touch is mispriced vs the SIG-aligned sharp (Polymarket) by >= min_edge,
+# TAKE it marketable (lift a cheap ask / hit a dear bid) before the stale bot re-quotes. The fill is the
+# stale order itself — the executable answer to the thin-book fill problem. Hold to convergence/settlement.
+sniper:
+  enabled: false            # [MASTER SWITCH] off by default; LIVE enable in the overlay.
+  min_edge: 0.03            # [TUNE-LIVE] |sharp - touch| must exceed this to snipe (sharp error + tick).
+  max_sharp_age_s: 20       # [TUNE-LIVE] ignore a sharp older than this.
+  record: false             # [SHADOW] append every would-be snipe to record_path.
+  record_path: "data/sniper_shadow/snipes.jsonl"
+  place: true               # false => RECORD-ONLY.
+  k_reference_sigma: 0.25   # conviction -> sigma_p for the Browne sizer.
+  sweep_to_edge: true       # [TUNE-LIVE] sweep the stale ladder (take more than the touch), not just the
+                            #   best level. Every filled unit still clears min_edge; capital sizes the qty.
+                            #   false => take only the best level at the touch price (legacy behaviour).
+  max_cross: 0.02           # [TUNE-LIVE] LEASH on the sweep: most we'll pay BEYOND the best touch. Sweep
+                            #   price = min(sharp -/+ min_edge, touch +/- max_cross). Bounds the spread we
+                            #   cross so a thin-book gap can't drag the fill to the edge boundary for only
+                            #   min_edge of edge (the 2026-10-03 over-deploy). ~4 ticks = near-touch depth only.
+
+# Order-book pressure (queue imbalance): on the bounded L2 book set, lopsided resting depth predicts a
+# short-horizon drift toward the thin side (bids-heavy => back YES; asks-heavy => buy NO). Needs NO external
+# sharp, so it covers the pure-SIG races cross/sniper can't. SHADOW by default (place:false) — records
+# would-be signals with the mid so we can measure if the pressure predicts the move before risking a cent.
+book_pressure:
+  enabled: false            # [MASTER SWITCH] off by default; enable (shadow) in the overlay.
+  levels: 5                 # [TUNE-LIVE] top-N book levels summed for the imbalance.
+  min_imbalance: 0.33       # [TUNE-LIVE] |QI| threshold to signal (0.33 ~= 2:1 depth ratio).
+  min_depth: 100            # [TUNE-LIVE] total top-N depth below this = too thin to trust.
+  tape_confirm: false       # [TUNE-LIVE] require the taker tape to agree with the book pressure.
+  tape_min: 0.20            # if confirming, |tape imbalance| must be >= this, same sign.
+  record: true              # [SHADOW] append every would-be signal to record_path.
+  record_path: "data/book_pressure_shadow/signals.jsonl"
+  place: false              # SHADOW: record-only until the signals validate; true => emit orders.
+
+# MM SHADOW research — measures two candidate MM upgrades WITHOUT touching the live quoter:
+#   (1) vol-aware spread: scale the half-width with realized vol (tighter calm / wider volatile) vs fixed k.
+#   (2) tape toxicity: which resting side informed taker flow is lifting -> the side a real MM would pull.
+# RECORD-ONLY (data/mm_shadow/decisions.jsonl); validate with tools/mm_shadow_validate.py before any live
+# MM change. The vol part is free (local mid_history); toxicity costs 1 tape read/market/tick so it is
+# gated OFF by default given the 429 ceiling — enable in the overlay only when the read budget allows.
+mm_shadow:
+  enabled: false            # [MASTER SWITCH] off by default; enable (shadow) in the overlay.
+  interval_s: 90            # cadence; >=30. 90s keeps even the toxicity read load light.
+  window: 60               # mids pulled from mid_history for the realized-vol estimate.
+  base_k: 0.015            # the quoter's current fixed half-width (compare vol_k against this).
+  vol_ref: 0.01            # realized per-step vol at which vol_k == base_k.
+  k_min: 0.005             # tightest vol_k (1 tick).
+  k_max: 0.04              # widest vol_k (cap a vol spike).
+  toxicity_enabled: false  # [READ BUDGET] off => no tape reads; on => 1 tape read/market/tick.
+  tox_min_volume: 100      # below this recent taker volume, imbalance is untrustworthy (no flag).
+  tox_threshold: 0.60      # |imbalance| >= this => flag that side toxic (pull/widen in a live build).
+  tape_limit: 50           # trades pulled per market when toxicity_enabled.
+  record_path: "data/mm_shadow/decisions.jsonl"
+
+# Dutch-book complement arb: when a race's D-YES bid + R-YES bid sum ABOVE 1, SHORT BOTH (buy NO on each)
+# for a locked profit robust to a third-party win. ATOMIC multi-leg (all-or-nothing, held to settlement),
+# so a naked single leg is never left open. Near-riskless; covers senate/house races Polymarket-cross can't.
+dutch_book:
+  enabled: false            # [MASTER SWITCH] SAFE DEFAULT (off). LIVE enable lives in the overlay.
+  min_edge: 0.01            # [TUNE-LIVE] minimum (sum_of_yes_bids - 1) to trade (covers slippage/odd-lot).
+  max_pairs: 40             # [TUNE-LIVE] cap pairs considered per cycle (read/write budget hygiene).
+  per_pair_frac: 0.01       # [TUNE-LIVE] capital per pair = this x equity (leg qty = that / leg price).
+  max_qty_per_leg: 100000   # [DEFAULT] hard per-leg share ceiling (gate/ledger clamp still applies).
+  record: false             # [SHADOW] append every would-be arb to record_path (for naked-leg analysis).
+  record_path: "data/dutch_book_shadow/arbs.jsonl"
+  place: true               # false => RECORD-ONLY (log opportunities, emit no live orders).
+
+# Mean-reversion TAKER (operator bet): cross the spread to fade a z-score overshoot on TIGHT-SPREAD
+# liquid markets (backtest sweet spot W≈60min / k≈2σ), SIGNAL tier, Browne-sized. SAFE-BY-CONSTRUCTION:
+# enters only when FLAT, exits are REDUCE-ONLY sells (the gate clamps sells to holdings and rejects a
+# sell with no holding, so an exit can neither double a position nor go naked — the thing that caused the
+# prior runaway). Position tracked from OUR OWN fills so MM inventory on the same market never confuses it.
+mr_taker:
+  enabled: false            # [MASTER SWITCH] SAFE DEFAULT (off). LIVE enable lives in the overlay.
+  markets: [843, 842, 841, 840, 948, 947, 983, 856]  # default to the order_flow liquid set; overlay can override.
+  window_seconds: 3600      # [TUNE-LIVE] ~60-min rolling mean for the z-score (backtest sweet spot).
+  min_samples: 20           # need this many mids before trusting z (≈10min at a 30s cadence).
+  k_enter: 2.0              # [TUNE-LIVE] |z| to OPEN (fade the overshoot).
+  k_exit: 0.5               # [TUNE-LIVE] |z| to CLOSE (reverted toward the mean) — reduce-only sell.
+  hold_max_s: 3600          # [TUNE-LIVE] hard time stop; exit regardless after this long.
+  max_spread: 0.012         # [TUNE-LIVE] skip markets wider than this — the taker toll kills the edge there.
+  k_reference_sigma: 0.25   # conviction → sigma_p for the Browne sizer (smaller ⇒ larger Kelly).
+
+# Cross-market divergence: trade SIG's slow STUDENT price toward the sharp Polymarket price on the 5
+# polarity-verified active races (Senate R/D, House R/D, GA gov). SIGNAL tier, directional-sized by the
+# Browne sizer. The provider fetches RAW Polymarket prices; the resolver (signals/cross_market) applies
+# the single polarity flip — never both.
+cross_market:
+  enabled: false            # [MASTER SWITCH] off by default; flip true at deploy once confirmed live.
+  poll_interval_s: 15       # [DEFAULT/TUNE-LIVE] Polymarket poll PERIOD (refresh+sleep; the sleep subtracts
+                            #   the refresh wall-time). Free public API — the overlay tunes this toward 1s.
+  poll_min_interval_s: 1    # [FLOOR] hard minimum period — a mis-set tiny interval can't busy-spin the API.
+  poll_concurrency: 20      # [TUNE-LIVE] max in-flight Polymarket fetches per refresh. The ~119-race set is
+                            #   swept concurrently under this bound (~0.9s @ 20, 0×429 probed live) so the
+                            #   poll can approach 1s; sequential was ~10s and capped the cadence at 15s.
+  cadence_s: 30             # [DEFAULT/TUNE-LIVE] strategy evaluate cadence (SIGNAL tier, not every cycle).
+  conviction_weighting: false  # [TUNE-LIVE] ON ⇒ threshold = cost_floor/conviction(sharp): a CONFIDENT
+                            #   benchmark (price far from 0.5) admits a SMALL gap, a mushy near-0.5 one needs
+                            #   a BIG gap — always floored at cost. Size also scales by conviction.
+  conviction_cost_floor: 0.02  # [TUNE-LIVE] round-trip cost floor — conviction can never admit a sub-cost gap.
+  sig_stale_s: 300          # [TUNE-LIVE] max SIG price age this SLOW edge tolerates. These election markets
+                            #   update far slower than the 15s fast-edge gate; the lag IS the edge and the
+                            #   sharp side stays fresh, so a few-min-old SIG mid is a valid comparable. An
+                            #   intent within this age bypasses the orchestrator's 15s stale gate (MM/arb do not).
+  sig_fetch_interval_s: 30  # [TUNE-LIVE] min seconds between our own SIG price fetches (one batch
+                            #   /exchanges/prices call for the 5 races). Backed off from the 15s poll because
+                            #   the shared ~100 reads/min SIG budget was 429-ing; sig_stale_s keeps the
+                            #   last-good price valid between fetches, so a slower cadence costs no freshness.
+  # ── THESIS-BASED EXIT (distinct from MM's price stop). Cross-market bets SIG CONVERGES to the sharp
+  # price, which REQUIRES sitting through SIG noise (8-10pt wobble) bigger than the edge (3-4pt gap). A
+  # tight price stop would cut winners in the noise before they converge — so the exit is LOOSER and
+  # thesis-gated, NOT tighter. Primary = conviction-gated (hold while the sharp benchmark still backs us,
+  # cut when its conviction evaporates/flips); natural = convergence take-profit (gap closed); backstop =
+  # a WIDE hard stop. MM keeps its own -20% price stop (directional_exit) — its inventory IS price-sensitive.
+  exit_convergence_tol: 0.01   # [TUNE-LIVE] |SIG − sharp| ≤ this ⇒ gap closed ⇒ take profit (edge captured).
+  exit_thesis_reversal_tol: 0.05  # [TUNE-LIVE] adverse-gap band below which a gap sign-flip is NOISE, not a
+                               #   thesis reversal → HOLD (don't whipsaw). Only cut when the sharp is firmly
+                               #   on the other side by MORE than this. Fixes the 703-vs-152 early-exit churn
+                               #   (edge 3-4pt < SIG noise 8-10pt, so a bare flip across zero = noise). The
+                               #   WIDE hard backstop (exit_hard_stop_pct) still caps real loss.
+  exit_hard_stop_pct: 0.25     # [TUNE-LIVE] WIDE catastrophe backstop — WIDER than MM's 0.20 (noise > gap),
+                               #   since the thesis-invalidation check does the real exit work before price
+                               #   ever gets here. Never set below MM's 0.20.
+  exit_support_conviction: 0.30  # [TUNE-LIVE] min benchmark conviction (at the sharp price) to KEEP HOLDING
+                               #   a losing position; below it the benchmark no longer backs us → cut.
+
+# §5e EVENT-TRIGGER (TAIL tier) — all-237 SIG abnormal-move × GDELT news-volume. Reads price MOVES from the
+# shared WS store (an in-memory rolling window, Option A — NOT /price-history × 237, which would re-create the
+# 429 pressure the cross-market retire just removed); hybrid-enriches only FIRING candidates with one
+# /price-history call each for a trade-count burst. Runs in its OWN async task (never the MM price pump).
+# Unproven ⇒ quarter-Kelly (no kelly_multiplier entry ⇒ default ×1) + TAIL budget. Enabled but SMALL.
+event_trigger:
+  enabled: false            # [MASTER SWITCH] SAFE DEFAULT (off). LIVE enable lives in the gitignored config/sig.local.yaml overlay.
+  tier: TAIL                # coarse/fuzzy edge → smallest allocator budget
+  cadence_s: 300.0          # [DEFAULT/TUNE-LIVE] strategy evaluate cadence (slow structural trigger)
+  min_confidence: 0.15      # [DEFAULT/TUNE-LIVE] below this classified confidence, emit nothing
+  min_sigma: 0.10           # [DEFAULT] wide sigma band (fuzzy edge ⇒ small Browne size)
+  max_sigma: 0.30           # [DEFAULT]
+  # ── provider (Option A store-window + hybrid tradeCount enrich + paced GDELT) ──
+  price_interval_s: 20.0    # [DEFAULT/TUNE-LIVE] how often the poller samples store.read_prices() into the window
+  window: 14                # [DEFAULT/TUNE-LIVE] rolling mid-window length per market (the move baseline)
+  min_candles: 6            # [DEFAULT] thin-history guard: never fire with fewer samples
+  move_mult: 3.0            # [DEFAULT/TUNE-LIVE] |Δmid| ≥ mult × recent per-step wobble ⇒ a move candidate
+  min_move: 0.03            # [DEFAULT] absolute floor (ignore sub-noise mid wobble)
+  enrich_tradecount: true   # [DEFAULT] confirm a trade-count burst on FIRING candidates (few /price-history calls)
+  enrich_resolution: "5m"   # [DEFAULT] candle resolution for the enrichment fetch
+  news_rate_limit_s: 5.0    # [DEFAULT] ≤1 GDELT req / this many seconds (external API — off the SIG read budget)
+  news_mult: 3.0            # [DEFAULT/TUNE-LIVE] latest ≥ mult × baseline ⇒ a news-volume spike (justified→follow)
+
+# §6 RESEARCH SIGNAL (aggregation / calibration). NOTE: extremize_factor_a default here (1.2) matches the
+# signals module's own aggregate_fair_value default — keep them in sync if either changes.
+signal:
+  signal_refresh_interval_min: 30   # [DEFAULT] slow in the grind; news-triggered + faster near Nov 3-4
+  aggregation_space: log-odds       # [FIXED] never probability-space averaging
+  source_weighting: equal           # [DEFAULT] equal-weight across distinct classes (no 2026 track record)
+  extremize_factor_a: 1.2           # [DEFAULT/TUNE-LIVE] push away from 0.5; 1.1-1.3; tune to calibration
+  sigma_p_shared_info_inflation: 1.25  # [DEFAULT] σ_p inflated because sources share polls
+  sigma_p_staleness_inflation: true    # [DEFAULT] σ_p rises with updated_at age
+  cross_market_divergence_weight: 1.5  # [DEFAULT] up-weight when real-money venues agree
+  favorite_longshot_flag: true         # [FIXED] flag underpriced-favorite / overpriced-longshot
+  endgame_source_priority: kalshi_ap   # [DEFAULT] AP live vote data drives p during Nov 3-4 repricing
+
+# §7 RISK / SAFETY / SUPERVISOR (Layer B/C — the autonomous resize + independent watchdog)
+safety:
+  drawdown_throttle_grind: 0.08     # [DEFAULT/TUNE-LIVE] fast-drop threshold that shrinks sizes in the grind
+  drawdown_throttle_endgame: 0.20   # [DEFAULT] looser in the authorized endgame (the bet is meant to swing)
+  stale_data_halt_s: 60.0           # [DEFAULT] feed older than this → halt-hold-auto-recover (risk §5)
+  repeated_error_halt_count: 5      # [DEFAULT] N consecutive order errors → halt-hold + alert
+  recon_mismatch_halt: true         # [FIXED] any position/order mismatch → halt, reconcile, resume
+  runaway_detect: true              # [DEFAULT/TUNE-LIVE] supervisor trips halt-but-HOLD on the runaway pattern
+  killswitch_default_mode: HALT_BUT_HOLD  # [FIXED] autonomous triggers never auto-flatten
+  undertrading_alarm: true          # [DEFAULT] the "fail small, NOT freeze" monitor — under-trading is a failure
+  supervisor_independent: true      # [FIXED] separate failure domain; acts even if the main loop deadlocks
+
+# §8 STARTUP / ELIGIBILITY / OPS (ported mbappe + SIG)
+ops:
+  single_instance_flock: true       # [FIXED] one instance only
+  preflight_recon_hard_gate: true   # [FIXED] mismatch → halt + alert, refuse to trade
+  eligibility_checks: true          # [FIXED] scope/email/residence before trading
+  heartbeat_liveness: true          # [FIXED] three-layer dead-man + daily positive ping (informational)
+  alert_channels: [ntfy, webhook, discord]  # [DEFAULT] money-redaction fence on every channel;
+                                    #   READ by infra/alerts/notifiers.build_log_and_push — a channel
+                                    #   removed here is not built. Each leg also self-disables without
+                                    #   its secret (NTFY_TOPIC / DISCORD_WEBHOOK_URL).
+  alert_cooldown_seconds: 300       # [DEFAULT] per-incident push cooldown (mbappe parity: 300s)
+  llm_explanation_async: true       # [FIXED] LLM cause-attribution AFTER the fact, never in the decision path

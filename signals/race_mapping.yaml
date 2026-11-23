@@ -1,0 +1,2718 @@
+# race_mapping.yaml — SIG race ↔ external venue (Polymarket / Kalshi) comparables for the divergence edge.
+#
+# Loaded by signals/mapping.py; CONSUMED by signals/cross_market.py (which applies `polarity` and the
+# confidence/resolution/liquidity gate before any price reaches signals/divergence.py). Schema v2.
+#
+# ─────────────────────────────────────────────────────────────────────────────────────────────────────
+# SAFETY CONTRACT (a WRONG mapping is worse than NO mapping):
+#   An entry feeds the engine ONLY if  confidence: high  AND  resolution_match: true  AND at least one
+#   external venue has  liquidity_ok: true  (RaceMapping.is_active). Anything else is recorded but DORMANT.
+# ─────────────────────────────────────────────────────────────────────────────────────────────────────
+#
+# POLARITY — THE #1 CORRECTNESS TRAP:
+#   "direct"   ⇒ venue_yes_price == SIG_yes      (venue YES is the SAME party/event as the SIG YES)
+#   "inverted" ⇒ venue_yes_price == 1 − SIG_yes  (venue YES is the OPPOSITE party)
+#   The resolver (signals/cross_market.py) applies the flip EXACTLY ONCE. Get it backwards for any race
+#   and that race trades BACKWARDS forever. Verified two independent ways for every ACTIVE race below:
+#     (a) same-/opposite-party question match (documented per race in `notes` + the polarity comment), and
+#     (b) COMPLEMENTARITY — the aligned R and D legs of a race sum to ≈1.0 (they are the two sides of one
+#         event); a mislabelled leg would make the sum ≈0 or ≈2. Checks (2026-10-02 live prices):
+#           Senate : R 0.365 (562794, direct) + D 0.625 (562793, direct)            = 0.99  ✓
+#           House  : R 0.075 (562803, direct) + D 1−0.075=0.925 (562803, inverted)  = 1.00  ✓  (and the
+#                    independent D-House market 562802 reads 0.925 — matches the inverted alignment)
+#           GA gov : R 0.52  (629338, direct) + independent D 0.485 (629337)        = 1.005 ✓
+#
+# ═══ LIVE POLYMARKET RE-MAP (2026-10-02, pulled from the server) ══════════════════════
+#   Polymarket Gamma + CLOB are REACHABLE from the droplet (HTTP 200, NOT the build-env 451 — the
+#   geoblock does not apply to the droplet's egress) and the 2026 markets are DEEP + live two-sided:
+#   Senate control ~$5.5M, House control ~$12.8M, GA governor ~$0.14M cumulative volume. The OLD gamma
+#   slugs (which-party-will-control-the-senate-after-the-2026-election, …) are DEAD (return []); the live
+#   markets are per-party sub-markets under events "Which party will win the Senate/House in 2026?" and
+#   "Georgia Governor Election Winner". Each sub-market is binary — outcomes ["Yes","No"], Yes = that
+#   party controls/wins — so we key on the gamma `market_id` + the Yes-leg `yes_token_id` (CLOB /midpoint
+#   is the freshest cross-check; gamma outcomePrices is the fallback — both confirmed working, see
+#   signals/poly_client.py). poly_client's GAMMA_BASE/CLOB_BASE already point at these live hosts; no
+#   client change was needed — only the ids below.
+#
+#   Kalshi (api.elections.kalshi.com): REACHABLE but every 2026 WINNER market is STILL EMPTY (no
+#   bid/ask/last/volume/OI as of 2026-10-02) → every Kalshi leg stays liquidity_ok:false (DORMANT).
+#
+# ═══ RESOLUTION-MISMATCH TRAPS (look comparable, resolve DIFFERENTLY — never map) ═════════════════════
+#   Polymarket: the "Party A / Option A win …" placeholder sub-markets (price null) are NOT the party
+#   markets — map ONLY the explicit "Republican"/"Democratic" sub-markets. Kalshi: KXMIDTERMMOV (margin),
+#   *ADVANCE* (primary), KXCAHOUSEDEM (seat count), KXDHOUSESUPERMAJ (supermajority), KXLTGOV (Lt.
+#   Governor), KXTXHOUSE / KXMOSD (STATE legislature) — each resolves on a different event.
+
+version: 2
+
+races:
+
+  # ── Chamber control: SIG "Will the {party} win the U.S. {chamber}?" ↔ Polymarket per-party control ──
+  us_senate_control_rep:
+    description: "Republican wins the U.S. Senate (2026). SIG YES = Republican controls Senate."
+    resolution_match: true          # SIG 'Rep controls Senate' == Poly 'Will the Republican Party control the Senate'
+    confidence: high                 # LIVE, polarity-verified (direct), liquid — activates 2026-10-02
+    sig: {market_id: 154, exchange_id: 843}
+    polymarket:
+      market_id: "562794"
+      yes_token_id: "51939490109676186832507970701169130490548061087912630009168726706475001411420"
+      yes_outcome: "Yes"             # Yes = Republican Party controls the Senate
+      polarity: direct               # SIG-R-YES == Poly 'Republican control' YES  (same party → DIRECT)
+      liquidity_ok: true             # event "Which party will win the Senate in 2026?"; ~$2.3M vol; Yes≈0.365
+      notes: "Poly mkt 562794 'Will the Republican Party control the Senate after the 2026 Midterms'."
+    kalshi:
+      ticker: "CONTROLS-2026-R"
+      yes_outcome: "Republican Party"
+      polarity: direct
+      liquidity_ok: false            # Kalshi market still empty (no live price) 2026-10-02 → DORMANT leg
+      notes: "event 'Which party will win the U.S. Senate?' -R sub-market. No live price yet."
+
+  us_senate_control_dem:
+    description: "Democrat wins the U.S. Senate (2026). SIG YES = Democratic controls Senate."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 153, exchange_id: 842}
+    polymarket:
+      market_id: "562793"
+      yes_token_id: "113287701564209339913693347405685749986285999146352375265161592243948562084773"
+      yes_outcome: "Yes"             # Yes = Democratic Party controls the Senate
+      polarity: direct               # SIG-D-YES == Poly 'Democratic control' YES (same party → DIRECT)
+      liquidity_ok: true             # ~$3.2M vol; Yes≈0.625
+      notes: "Poly mkt 562793 'Will the Democratic Party control the Senate after the 2026 Midterms'."
+    kalshi:
+      ticker: "CONTROLS-2026-D"
+      yes_outcome: "Democratic Party"
+      polarity: direct
+      liquidity_ok: false
+      notes: "-D sub-market of CONTROLS-2026. No live price yet."
+
+  us_house_control_rep:
+    description: "Republican wins the U.S. House (2026). SIG YES = Republican controls House."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 152, exchange_id: 841}
+    polymarket:
+      market_id: "562803"
+      yes_token_id: "65139230827417363158752884968303867495725894165574887635816574090175320800482"
+      yes_outcome: "Yes"             # Yes = Republican Party controls the House
+      polarity: direct               # SIG-R-YES == Poly 'Republican control' YES (same party → DIRECT)
+      liquidity_ok: true             # ~$5.5M vol; Yes≈0.075
+      notes: "Poly mkt 562803 'Will the Republican Party control the House after the 2026 Midterms'."
+    kalshi:
+      ticker: "CONTROLH-2026-R"
+      yes_outcome: "Republican Party"
+      polarity: direct
+      liquidity_ok: false
+      notes: "-R sub-market of CONTROLH-2026. No live price yet."
+
+  us_house_control_dem:
+    description: "Democrat wins the U.S. House (2026). SIG YES = Democratic controls House."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 151, exchange_id: 840}
+    polymarket:
+      # INVERTED (verified): mapped to the REPUBLICAN-control House market, so SIG-D-YES = 1 − P(R controls).
+      # Aligned = 1 − 0.075 = 0.925, which EXACTLY matches the independent Democratic-House market (562802,
+      # Yes 0.925) — the cross-check that proves the flip is right. This is the live inverted exemplar the
+      # resolver's single-flip seam test routes end-to-end (see tests/test_cross_market_divergence.py).
+      market_id: "562803"
+      yes_token_id: "65139230827417363158752884968303867495725894165574887635816574090175320800482"
+      yes_outcome: "Yes"             # Yes = Republican controls the House (the OPPOSITE party → flipped)
+      polarity: inverted             # SIG-D-YES == 1 − Poly 'Republican control' YES
+      liquidity_ok: true             # same deep R-House market; ~$5.5M vol
+      notes: "Poly mkt 562803 (R-House) read INVERTED for SIG's Democrat-controls-House market."
+    kalshi:
+      ticker: "CONTROLH-2026-D"
+      yes_outcome: "Democratic Party"
+      polarity: direct
+      liquidity_ok: false
+      notes: "-D sub-market of CONTROLH-2026. No live price yet."
+
+  # ── Individual Senate SEATS: Polymarket has NO per-seat Senate market (only chamber control + govs),
+  #    and Kalshi seat markets are still empty → DORMANT (confidence: low) until a liquid comparable exists. ──
+  georgia_senate_rep:
+    description: "Republican wins the Georgia U.S. Senate seat (2026)."
+    resolution_match: true
+    confidence: low                  # NO liquid external — Polymarket has no GA-Senate-seat market; Kalshi empty
+    sig: {market_id: 259, exchange_id: 948}
+    kalshi:
+      ticker: "SENATEGA-26-R"
+      yes_outcome: "Republican (Mike Collins)"
+      polarity: direct
+      liquidity_ok: false
+      notes: "Rule resolves on the Republican PARTY winning the GA seat. No live price. Polymarket has no GA-Senate-seat market (2026-10-02)."
+
+  georgia_senate_dem:
+    description: "Democrat wins the Georgia U.S. Senate seat (2026)."
+    resolution_match: true
+    confidence: low
+    sig: {market_id: 258, exchange_id: 947}
+    kalshi:
+      ticker: "SENATEGA-26-D"
+      yes_outcome: "Democratic (Jon Ossoff)"
+      polarity: direct
+      liquidity_ok: false
+      notes: "No live price. Polymarket has no GA-Senate-seat market (2026-10-02)."
+
+  texas_senate_rep:
+    description: "Republican wins the Texas U.S. Senate seat (2026)."
+    resolution_match: true
+    confidence: low
+    sig: {market_id: 294, exchange_id: 983}
+    kalshi:
+      ticker: "SENATETX-26-R"
+      yes_outcome: "Republican (Ken Paxton)"
+      polarity: direct
+      liquidity_ok: false
+      notes: "No live price. Polymarket has no TX-Senate-seat market (2026-10-02)."
+
+  # ── Governor: SIG "Will the {party} win the {State} Governor?" ↔ Polymarket "{State} Governor Election Winner" ──
+  #    TRAP: do NOT use Kalshi KXLTGOV* (Lieutenant Governor) nor Poly '(Person)' candidate sub-markets.
+  georgia_governor_rep:
+    description: "Republican wins the Georgia Governor race (2026)."
+    resolution_match: true          # SIG 'Rep wins GA gov' == Poly 'Will the Republicans win the Georgia governor race in 2026?'
+    confidence: high                 # LIVE, polarity-verified (direct), liquid — THINNER than the chamber markets
+    sig: {market_id: 167, exchange_id: 856}
+    polymarket:
+      market_id: "629338"
+      yes_token_id: "17555504943162344098534978138053308162738914357892515623100381936995379845407"
+      yes_outcome: "Yes"             # Yes = Republicans win the GA governor race
+      polarity: direct               # SIG-R-YES == Poly 'Republicans win' YES (same party → DIRECT)
+      liquidity_ok: true             # event "Georgia Governor Election Winner"; ~$64k vol; Yes≈0.52
+      notes: "Poly mkt 629338 'Will the Republicans win the Georgia governor race in 2026?'. THINNER ($64k cumulative vol, ~4c spread) — real but the strategy's disagreement/skepticism guards matter more here."
+    kalshi:
+      ticker: "GOVPARTYGA-26-R"
+      yes_outcome: "Republican (Rick Jackson)"
+      polarity: direct
+      liquidity_ok: false
+      notes: "GOVPARTYGA-26, NOT KXLTGOVGA (Lt. Governor). No live price yet."
+
+  # ── Phase-1 Polymarket GOVERNOR coverage (24 races, polarity=direct, complementarity+liquidity verified 2026-10-02) ──
+  alabama_governor_rep:
+    description: "Republican wins Alabama Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 156, exchange_id: 845}
+    polymarket:
+      market_id: "629271"
+      yes_token_id: "109054998942213692077271472955675949350077711784792442998941210738471587356514"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  alabama_governor_dem:
+    description: "Democratic wins Alabama Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 155, exchange_id: 844}
+    polymarket:
+      market_id: "629270"
+      yes_token_id: "66799540193763442273153807390120946960260027428359861674134091731050086258652"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  arizona_governor_rep:
+    description: "Republican wins Arizona Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 160, exchange_id: 849}
+    polymarket:
+      market_id: "629184"
+      yes_token_id: "18859933834391393264997730047904836599784455493762567366530805521273388590339"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  arizona_governor_dem:
+    description: "Democratic wins Arizona Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 159, exchange_id: 848}
+    polymarket:
+      market_id: "629183"
+      yes_token_id: "48368039124533504674394545622809320495392482760644292167644042386014017726777"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  arkansas_governor_rep:
+    description: "Republican wins Arkansas Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 158, exchange_id: 847}
+    polymarket:
+      market_id: "629284"
+      yes_token_id: "102338577209265315381870206199608266895858545057511455426333199851251620807909"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  arkansas_governor_dem:
+    description: "Democratic wins Arkansas Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 157, exchange_id: 846}
+    polymarket:
+      market_id: "629283"
+      yes_token_id: "40899822988489523883534886021948522261134770684960257613447444387617827489093"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  colorado_governor_rep:
+    description: "Republican wins Colorado Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 164, exchange_id: 853}
+    polymarket:
+      market_id: "629297"
+      yes_token_id: "17546916569546560082654809047780534438941220653259855302022567325162996913878"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  colorado_governor_dem:
+    description: "Democratic wins Colorado Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 163, exchange_id: 852}
+    polymarket:
+      market_id: "629296"
+      yes_token_id: "13561110222018578357785114619723468880952494576477687978085608584743809891728"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  connecticut_governor_rep:
+    description: "Republican wins Connecticut Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 165, exchange_id: 854}
+    polymarket:
+      market_id: "629312"
+      yes_token_id: "28222949582692352334110457056784683609708218641745397767642367585928375878193"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  connecticut_governor_dem:
+    description: "Democratic wins Connecticut Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 298, exchange_id: 987}
+    polymarket:
+      market_id: "629311"
+      yes_token_id: "94716743709853585469973889676994451123824166409123282527490222914006156870020"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  florida_governor_rep:
+    description: "Republican wins Florida Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 300, exchange_id: 989}
+    polymarket:
+      market_id: "629325"
+      yes_token_id: "107409796822153809778143872196236532785178617102787858261374110829112218839748"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  florida_governor_dem:
+    description: "Democratic wins Florida Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 299, exchange_id: 988}
+    polymarket:
+      market_id: "629324"
+      yes_token_id: "45666577334498374671436529469006420565255125221309505855441517627481607414492"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  hawaii_governor_rep:
+    description: "Republican wins Hawaii Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 302, exchange_id: 991}
+    polymarket:
+      market_id: "629351"
+      yes_token_id: "6206829575409742132406519993328718521258147411060807019224318077365646262406"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  hawaii_governor_dem:
+    description: "Democratic wins Hawaii Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 301, exchange_id: 990}
+    polymarket:
+      market_id: "629350"
+      yes_token_id: "110136962687751258520353298894226275160632723246908859759371791290370868364654"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  idaho_governor_rep:
+    description: "Republican wins Idaho Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 171, exchange_id: 860}
+    polymarket:
+      market_id: "629364"
+      yes_token_id: "87236158376775117473663657833358313384905412589236150240764095508530872387075"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  idaho_governor_dem:
+    description: "Democratic wins Idaho Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 170, exchange_id: 859}
+    polymarket:
+      market_id: "629363"
+      yes_token_id: "33422454484664318134839474897555797731651253833609657227452504228201243908837"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  illinois_governor_rep:
+    description: "Republican wins Illinois Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 173, exchange_id: 862}
+    polymarket:
+      market_id: "629377"
+      yes_token_id: "84456939894380206199554748929444222951802944556070526261308395410636849018567"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  illinois_governor_dem:
+    description: "Democratic wins Illinois Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 172, exchange_id: 861}
+    polymarket:
+      market_id: "629376"
+      yes_token_id: "23435178151774440115423538812688705649247609803850018642847000556068202005554"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  iowa_governor_rep:
+    description: "Republican wins Iowa Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 169, exchange_id: 858}
+    polymarket:
+      market_id: "629398"
+      yes_token_id: "35744753605838865227961720864928711626409257515092566128191701940968999011763"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  iowa_governor_dem:
+    description: "Democratic wins Iowa Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 168, exchange_id: 857}
+    polymarket:
+      market_id: "629397"
+      yes_token_id: "45621938709469399887344165091123819127263258871102896783851049824656362940868"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  kansas_governor_rep:
+    description: "Republican wins Kansas Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 304, exchange_id: 993}
+    polymarket:
+      market_id: "629413"
+      yes_token_id: "63693837389044553718411703128182914158332390182546987000527783026710645197027"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  kansas_governor_dem:
+    description: "Democratic wins Kansas Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 303, exchange_id: 992}
+    polymarket:
+      market_id: "629412"
+      yes_token_id: "79484096963248498578517243733071571984223432387663163312687533493173144145268"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  maine_governor_rep:
+    description: "Republican wins Maine Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 177, exchange_id: 866}
+    polymarket:
+      market_id: "629426"
+      yes_token_id: "77900872247159891045693614974240851672235710405168744753050508553885061962390"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  maine_governor_dem:
+    description: "Democratic wins Maine Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 176, exchange_id: 865}
+    polymarket:
+      market_id: "629425"
+      yes_token_id: "92845243966002494782242842696395378111295494684532387488276103452077216171518"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  maryland_governor_rep:
+    description: "Republican wins Maryland Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 175, exchange_id: 864}
+    polymarket:
+      market_id: "629439"
+      yes_token_id: "99454680080858182975916786322594927636228275589135289499749895045005789315019"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  maryland_governor_dem:
+    description: "Democratic wins Maryland Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 174, exchange_id: 863}
+    polymarket:
+      market_id: "629438"
+      yes_token_id: "21509039698927424303190259436702262868147960450053769072201076877922760800234"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  massachusetts_governor_rep:
+    description: "Republican wins Massachusetts Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 371, exchange_id: 1060}
+    polymarket:
+      market_id: "629452"
+      yes_token_id: "60883119277247470994582429550632811829505423471772740208057726618094988141160"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  massachusetts_governor_dem:
+    description: "Democratic wins Massachusetts Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 370, exchange_id: 1059}
+    polymarket:
+      market_id: "629451"
+      yes_token_id: "86599393407315290835574565918707146460542680358932655202787183319230565551172"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  michigan_governor_rep:
+    description: "Republican wins Michigan Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 306, exchange_id: 995}
+    polymarket:
+      market_id: "629465"
+      yes_token_id: "3091929947863726371877226324959784580013579280794631063604653957812689085396"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  michigan_governor_dem:
+    description: "Democratic wins Michigan Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 305, exchange_id: 994}
+    polymarket:
+      market_id: "629464"
+      yes_token_id: "63517706574758177502492185078056756527324898714284142778693046697324148388357"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  minnesota_governor_rep:
+    description: "Republican wins Minnesota Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 308, exchange_id: 997}
+    polymarket:
+      market_id: "629478"
+      yes_token_id: "52147423614804649302719056405435366546705837330765266472799012257146403501281"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  minnesota_governor_dem:
+    description: "Democratic wins Minnesota Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 307, exchange_id: 996}
+    polymarket:
+      market_id: "629477"
+      yes_token_id: "9126148503694470083148381233969293708563386203943196700151133094426622508276"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  nebraska_governor_rep:
+    description: "Republican wins Nebraska Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 179, exchange_id: 868}
+    polymarket:
+      market_id: "629491"
+      yes_token_id: "73030731922944118546035998309915164095890033874433358499266850532352206183824"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  nebraska_governor_dem:
+    description: "Democratic wins Nebraska Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 178, exchange_id: 867}
+    polymarket:
+      market_id: "629490"
+      yes_token_id: "3466069051818884243073756614952529401222377791973010490050674378116587529746"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  nevada_governor_rep:
+    description: "Republican wins Nevada Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 183, exchange_id: 872}
+    polymarket:
+      market_id: "629506"
+      yes_token_id: "26514162544090965098284473937422427465088569867873952479707540387314217381282"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  nevada_governor_dem:
+    description: "Democratic wins Nevada Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 182, exchange_id: 871}
+    polymarket:
+      market_id: "629505"
+      yes_token_id: "1246864710804983890692377994891598401616546411512113588399830364959833951829"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  new_hampshire_governor_rep:
+    description: "Republican wins New Hampshire Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 373, exchange_id: 1062}
+    polymarket:
+      market_id: "629519"
+      yes_token_id: "74721757099502856629978429446702729437619614092592091000501653336065671742582"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  new_hampshire_governor_dem:
+    description: "Democratic wins New Hampshire Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 372, exchange_id: 1061}
+    polymarket:
+      market_id: "629518"
+      yes_token_id: "50014042446564445111498439180144732017863294969428914194102372141019045896702"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  new_mexico_governor_rep:
+    description: "Republican wins New Mexico Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 181, exchange_id: 870}
+    polymarket:
+      market_id: "629532"
+      yes_token_id: "66486026915087812107390926299428531209332603871609345502520740675575639289776"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  new_mexico_governor_dem:
+    description: "Democratic wins New Mexico Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 180, exchange_id: 869}
+    polymarket:
+      market_id: "629531"
+      yes_token_id: "17781069937970314001472355582427331102577624490515546410398313363226785264562"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  new_york_governor_rep:
+    description: "Republican wins New York Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 185, exchange_id: 874}
+    polymarket:
+      market_id: "629545"
+      yes_token_id: "108106288970534575307495623455701128869187166289634633189375113923142364674394"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  new_york_governor_dem:
+    description: "Democratic wins New York Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 184, exchange_id: 873}
+    polymarket:
+      market_id: "629544"
+      yes_token_id: "64050273355694113671090110638685043795558853994186493795797238541534244584786"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  oklahoma_governor_rep:
+    description: "Republican wins Oklahoma Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 374, exchange_id: 1063}
+    polymarket:
+      market_id: "629571"
+      yes_token_id: "12195532376431728872322429427491005809800415403259444414908025975252692275196"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  oklahoma_governor_dem:
+    description: "Democratic wins Oklahoma Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 186, exchange_id: 875}
+    polymarket:
+      market_id: "629570"
+      yes_token_id: "37700214927702560862325287464231700075479667077774217635210792305464305010407"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  oregon_governor_rep:
+    description: "Republican wins Oregon Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 188, exchange_id: 877}
+    polymarket:
+      market_id: "629584"
+      yes_token_id: "60638893393471159707288518099941698438888451383700859041754575565737488871199"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  oregon_governor_dem:
+    description: "Democratic wins Oregon Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 187, exchange_id: 876}
+    polymarket:
+      market_id: "629583"
+      yes_token_id: "9755787435930070640870536823763281543938387827225853124824813626465365556107"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  pennsylvania_governor_rep:
+    description: "Republican wins Pennsylvania Governor (2026). SIG YES = Republican wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 190, exchange_id: 879}
+    polymarket:
+      market_id: "629615"
+      yes_token_id: "5688801435889428424829669547673250506620304454224290559333533905846390372394"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  pennsylvania_governor_dem:
+    description: "Democratic wins Pennsylvania Governor (2026). SIG YES = Democratic wins."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 189, exchange_id: 878}
+    polymarket:
+      market_id: "629614"
+      yes_token_id: "86158564038726526008163887440654010269502827272776903587995739265573029112945"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  georgia_governor_dem:
+    description: "DEM wins governor:georgia (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 166, exchange_id: 855}
+    polymarket:
+      market_id: "629337"
+      yes_token_id: "59980150909931986777748227027020522224275707387562276219060223816867188565245"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  south_dakota_governor_rep:
+    description: "REP wins governor:south dakota (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 309, exchange_id: 998}
+    polymarket:
+      market_id: "629654"
+      yes_token_id: "33837211479232375079024923304907620849682048653904904303440832993092201214603"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  south_dakota_governor_dem:
+    description: "DEM wins governor:south dakota (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 194, exchange_id: 883}
+    polymarket:
+      market_id: "629653"
+      yes_token_id: "19857809653204352084235953967001149759321806996646353766198011041287290557051"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  tennessee_governor_rep:
+    description: "REP wins governor:tennessee (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 311, exchange_id: 1000}
+    polymarket:
+      market_id: "629667"
+      yes_token_id: "24326213014906491852819643583064878883456155870415421965354259617491710449915"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  tennessee_governor_dem:
+    description: "DEM wins governor:tennessee (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 310, exchange_id: 999}
+    polymarket:
+      market_id: "629666"
+      yes_token_id: "42092635016892213098098431597314233695276464574605657188222427223673881775927"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  texas_governor_rep:
+    description: "REP wins governor:texas (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 196, exchange_id: 885}
+    polymarket:
+      market_id: "629691"
+      yes_token_id: "54743173400191373818547682740700297683169841200363505623023527116388816282328"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  texas_governor_dem:
+    description: "DEM wins governor:texas (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 195, exchange_id: 884}
+    polymarket:
+      market_id: "629690"
+      yes_token_id: "48232987449750988261789196083999659380058157021032932634331257492238853387252"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  vermont_governor_rep:
+    description: "REP wins governor:vermont (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 313, exchange_id: 1002}
+    polymarket:
+      market_id: "629708"
+      yes_token_id: "41583919731714354912849507182398941127545694257513505398713274521520484370640"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  vermont_governor_dem:
+    description: "DEM wins governor:vermont (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 312, exchange_id: 1001}
+    polymarket:
+      market_id: "629707"
+      yes_token_id: "60184991030711150053889856154789765911962237408503307206289529109604385579009"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  wisconsin_governor_rep:
+    description: "REP wins governor:wisconsin (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 315, exchange_id: 1004}
+    polymarket:
+      market_id: "629721"
+      yes_token_id: "110568426700454908727813010666782278712329569099119457880819387703511785225289"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  wisconsin_governor_dem:
+    description: "DEM wins governor:wisconsin (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 314, exchange_id: 1003}
+    polymarket:
+      market_id: "629720"
+      yes_token_id: "47540146623620182724372695903724852067595146419459482790641441152489267651664"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  mn_05_house_rep:
+    description: "REP wins house:mn-05 (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 339, exchange_id: 1028}
+    polymarket:
+      market_id: "1283872"
+      yes_token_id: "85481834502498043935806386600094738202338314908938508331117373587697666440459"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  mn_05_house_dem:
+    description: "DEM wins house:mn-05 (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 338, exchange_id: 1027}
+    polymarket:
+      market_id: "1283873"
+      yes_token_id: "20781040640207419108275494852260640607740976077797936236220411009198028862221"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  nh_01_house_rep:
+    description: "REP wins house:nh-01 (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 376, exchange_id: 1065}
+    polymarket:
+      market_id: "942909"
+      yes_token_id: "91186816975424134991471599978287903711550131664584931108307233067509874308550"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  nh_01_house_dem:
+    description: "DEM wins house:nh-01 (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 375, exchange_id: 1064}
+    polymarket:
+      market_id: "942910"
+      yes_token_id: "15841973896294397863780283211777886833063131427675236235397936182214462263761"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  sc_01_house_rep:
+    description: "REP wins house:sc-01 (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 242, exchange_id: 931}
+    polymarket:
+      market_id: "1284671"
+      yes_token_id: "9923678446010680223075564519648906123468834936314053947915034634742964733395"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  sc_01_house_dem:
+    description: "DEM wins house:sc-01 (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 241, exchange_id: 930}
+    polymarket:
+      market_id: "1284672"
+      yes_token_id: "85565449085981219626125045806096417728054675797071084365546294832037886206869"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  tx_15_house_rep:
+    description: "REP wins house:tx-15 (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 244, exchange_id: 933}
+    polymarket:
+      market_id: "944199"
+      yes_token_id: "288881405005644701938669382130096221659404307173045178355284864479406728774"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  tx_15_house_dem:
+    description: "DEM wins house:tx-15 (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 243, exchange_id: 932}
+    polymarket:
+      market_id: "944201"
+      yes_token_id: "6584875983046678011286869107197719818123093254495444235544680527373303971994"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  va_01_house_rep:
+    description: "REP wins house:va-01 (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 249, exchange_id: 938}
+    polymarket:
+      market_id: "944281"
+      yes_token_id: "19527325130044660074684336011478717458899906478875219180396447156299505391740"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  va_01_house_dem:
+    description: "DEM wins house:va-01 (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 342, exchange_id: 1031}
+    polymarket:
+      market_id: "944282"
+      yes_token_id: "88628412725357801969852238315853152041907755032296775468463465337049299853893"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  arkansas_senate_rep:
+    description: "REP wins senate:arkansas (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 255, exchange_id: 944}
+    polymarket:
+      market_id: "630654"
+      yes_token_id: "48125407658537781630126353551882211313520827583468729408685633955919030034320"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  arkansas_senate_dem:
+    description: "DEM wins senate:arkansas (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 254, exchange_id: 943}
+    polymarket:
+      market_id: "630653"
+      yes_token_id: "68370995073141964079913803663665941780115677360430806954011390499916208708512"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  delaware_senate_rep:
+    description: "[2026-10-09 REMAPPED from 500712 (the CLOSED 2024 market) to 2026 market 630680 (Will the Republicans win the Delaware Senate race in 2026?; Poly 0.0165, Kalshi-consistent).] REP wins senate:delaware (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 386, exchange_id: 1075}
+    polymarket:
+      market_id: "630680"
+      yes_token_id: "18791277393217683755628516529477058015186638022373024614300661393042993809537"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  delaware_senate_dem:
+    description: "[2026-10-09 REMAPPED from 500711 (the CLOSED 2024 market) to 2026 market 630679 (Will the Democrats win the Delaware Senate race in 2026?; Poly 0.9855, Kalshi-consistent).] DEM wins senate:delaware (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 353, exchange_id: 1042}
+    polymarket:
+      market_id: "630679"
+      yes_token_id: "109467029375682717672947466588331781838347232688418556926634334189471462678711"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  florida_senate_rep:
+    description: "[2026-10-09 REMAPPED from 500657 (the CLOSED 2024 market) to 2026 market 631045 (Will the Republicans win the Florida Senate race in 2026?; Poly 0.905, Kalshi-consistent).] REP wins senate:florida (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 355, exchange_id: 1044}
+    polymarket:
+      market_id: "631045"
+      yes_token_id: "47848555635748009983462962481545341194026880518141560747711492227563791266566"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  florida_senate_dem:
+    description: "[2026-10-09 REMAPPED from 500656 (the CLOSED 2024 market) to 2026 market 631044 (Will the Democrats win the Florida Senate race in 2026?; Poly 0.1, Kalshi-consistent).] DEM wins senate:florida (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 354, exchange_id: 1043}
+    polymarket:
+      market_id: "631044"
+      yes_token_id: "109815773012907461372639157658293071578555374097742562684476865021743386609433"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  idaho_senate_rep:
+    description: "REP wins senate:idaho (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 263, exchange_id: 952}
+    polymarket:
+      market_id: "630706"
+      yes_token_id: "6756779810577885828704276397389282544084821591107025125954859235939281991675"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  idaho_senate_dem:
+    description: "DEM wins senate:idaho (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 262, exchange_id: 951}
+    polymarket:
+      market_id: "630705"
+      yes_token_id: "106941193163110167696426338043140728938381127310653153528096347878604033727123"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  illinois_senate_rep:
+    description: "REP wins senate:illinois (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 265, exchange_id: 954}
+    polymarket:
+      market_id: "630721"
+      yes_token_id: "28293677056280080359554222049156424637171556977737746792223933800049748849083"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  illinois_senate_dem:
+    description: "DEM wins senate:illinois (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 264, exchange_id: 953}
+    polymarket:
+      market_id: "630720"
+      yes_token_id: "3015477455071606958014729552697672689898195807324746948280693702257424620276"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  iowa_senate_rep:
+    description: "REP wins senate:iowa (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 261, exchange_id: 950}
+    polymarket:
+      market_id: "630734"
+      yes_token_id: "107844449523890311740907586041395758413047559802389895859202256336422357556837"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  iowa_senate_dem:
+    description: "DEM wins senate:iowa (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 260, exchange_id: 949}
+    polymarket:
+      market_id: "630733"
+      yes_token_id: "90689690530039118737607894922148077480097700217322320781526913496162509181445"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  kansas_senate_rep:
+    description: "REP wins senate:kansas (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 357, exchange_id: 1046}
+    polymarket:
+      market_id: "630747"
+      yes_token_id: "18131974965869813060047290511060211742274666573066200470724290584768041211203"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  kansas_senate_dem:
+    description: "DEM wins senate:kansas (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 356, exchange_id: 1045}
+    polymarket:
+      market_id: "630746"
+      yes_token_id: "75079868093228966915894372964099062660587490227046756021175661325867722540666"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  louisiana_senate_rep:
+    description: "REP wins senate:louisiana (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 269, exchange_id: 958}
+    polymarket:
+      market_id: "634879"
+      yes_token_id: "79597156840177168343562124064866301094619106642263695929345529947536386203124"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  louisiana_senate_dem:
+    description: "DEM wins senate:louisiana (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 268, exchange_id: 957}
+    polymarket:
+      market_id: "634878"
+      yes_token_id: "80536528552003281640741026890878925456783654983296822683495274364289350034456"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  maine_senate_rep:
+    description: "[2026-10-09 REMAPPED from 500736 (the CLOSED 2024 market) to 2026 market 630773 (Will the Republicans win the Maine Senate race in 2026?; Poly 0.425, Kalshi-consistent).] REP wins senate:maine (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 271, exchange_id: 960}
+    polymarket:
+      market_id: "630773"
+      yes_token_id: "2142948285506077695096498341598672159464223074468931276310105532825810210121"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  maine_senate_dem:
+    description: "[2026-10-09 REMAPPED from 500735 (the CLOSED 2024 market) to 2026 market 630772 (Will the Democrats win the Maine Senate race in 2026?; Poly 0.585, Kalshi-consistent).] DEM wins senate:maine (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 270, exchange_id: 959}
+    polymarket:
+      market_id: "630772"
+      yes_token_id: "7589880081658059374445882095611024032084645048848237404312287942463647821549"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  massachusetts_senate_rep:
+    description: "[2026-10-09 REMAPPED from 500729 (the CLOSED 2024 market) to 2026 market 630791 (Will the Republicans win the Massachusetts Senate race in 2026?; Poly 0.0175, Kalshi-consistent).] REP wins senate:massachusetts (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 380, exchange_id: 1069}
+    polymarket:
+      market_id: "630791"
+      yes_token_id: "94720102345103978732985991591541449349105398685307981352929740529082927790385"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  massachusetts_senate_dem:
+    description: "[2026-10-09 REMAPPED from 500728 (the CLOSED 2024 market) to 2026 market 630790 (Will the Democrats win the Massachusetts Senate race in 2026?; Poly 0.982, Kalshi-consistent).] DEM wins senate:massachusetts (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 379, exchange_id: 1068}
+    polymarket:
+      market_id: "630790"
+      yes_token_id: "37806907368043161074949113436745462734936336037202698916361016094424427186209"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  michigan_senate_rep:
+    description: "[2026-10-09 REMAPPED from 255449 (the CLOSED 2024 market) to 2026 market 630806 (Will the Republicans win the Michigan Senate race in 2026?; Poly 0.305, Kalshi-consistent).] REP wins senate:michigan (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 359, exchange_id: 1048}
+    polymarket:
+      market_id: "630806"
+      yes_token_id: "1046980875306043125128331871114794349002409233139736033870402475326170083426"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  michigan_senate_dem:
+    description: "[2026-10-09 REMAPPED from 255448 (the CLOSED 2024 market) to 2026 market 630805 (Will the Democrats win the Michigan Senate race in 2026?; Poly 0.705, Kalshi-consistent).] DEM wins senate:michigan (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 358, exchange_id: 1047}
+    polymarket:
+      market_id: "630805"
+      yes_token_id: "71772627544132140586824126381855151743830987860593343955509593715269534710061"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  minnesota_senate_rep:
+    description: "[2026-10-09 REMAPPED from 500690 (the CLOSED 2024 market) to 2026 market 630819 (Will the Republicans win the Minnesota Senate race in 2026?; Poly 0.135, Kalshi-consistent).] REP wins senate:minnesota (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 361, exchange_id: 1050}
+    polymarket:
+      market_id: "630819"
+      yes_token_id: "70179930004460104520571721963263381325865077807861641105900318902168490512539"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  minnesota_senate_dem:
+    description: "[2026-10-09 REMAPPED from 500689 (the CLOSED 2024 market) to 2026 market 630818 (Will the Democrats win the Minnesota Senate race in 2026?; Poly 0.865, Kalshi-consistent).] DEM wins senate:minnesota (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 360, exchange_id: 1049}
+    polymarket:
+      market_id: "630818"
+      yes_token_id: "5210147086444382339849101722545511095151948730486562412029285471203011774407"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  mississippi_senate_rep:
+    description: "[2026-10-09 REMAPPED from 500699 (the CLOSED 2024 market) to 2026 market 631018 (Will the Republicans win the Mississippi Senate race in 2026?; Poly 0.925, Kalshi-consistent).] REP wins senate:mississippi (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 273, exchange_id: 962}
+    polymarket:
+      market_id: "631018"
+      yes_token_id: "36589074670521348842786325911391532620430247097981345860356484520500173888573"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  mississippi_senate_dem:
+    description: "[2026-10-09 REMAPPED from 500698 (the CLOSED 2024 market) to 2026 market 631017 (Will the Democrats win the Mississippi Senate race in 2026?; Poly 0.075, Kalshi-consistent).] DEM wins senate:mississippi (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 272, exchange_id: 961}
+    polymarket:
+      market_id: "631017"
+      yes_token_id: "77001639760095266374534198365421436593389036687975321536722226607654949914567"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  montana_senate_rep:
+    description: "[2026-10-09 REMAPPED from 500115 (the CLOSED 2024 market) to 2026 market 630832 (Will the Republicans win the Montana Senate race in 2026?; Poly 0.915, Kalshi-consistent). DORMANT: Poly D+R 0.92 (third candidate) vs SIG 0.98, resolution may differ; review before enabling.] REP wins senate:montana (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: low
+    sig: {market_id: 275, exchange_id: 964}
+    polymarket:
+      market_id: "630832"
+      yes_token_id: "102325039069045369431277041414667266705633344716966967751024692805337688459829"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  montana_senate_dem:
+    description: "[2026-10-09 REMAPPED from 500114 (the CLOSED 2024 market) to 2026 market 630831 (Will the Democrats win the Montana Senate race in 2026?; Poly 0.0055, Kalshi-consistent). DORMANT: Poly D+R 0.92 (third candidate) vs SIG 0.98, resolution may differ; review before enabling.] DEM wins senate:montana (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: low
+    sig: {market_id: 274, exchange_id: 963}
+    polymarket:
+      market_id: "630831"
+      yes_token_id: "88799262678230165893255813616837100962595819984760588859765042402182443138810"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  new_hampshire_senate_rep:
+    description: "REP wins senate:new hampshire (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 382, exchange_id: 1071}
+    polymarket:
+      market_id: "630845"
+      yes_token_id: "62227089537100115269143206481757249285124282589590263790284791475153705872216"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  new_hampshire_senate_dem:
+    description: "DEM wins senate:new hampshire (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 381, exchange_id: 1070}
+    polymarket:
+      market_id: "630844"
+      yes_token_id: "82410058691149830741200014405570918770267839390767234397030380747995715352939"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  new_jersey_senate_rep:
+    description: "[2026-10-09 REMAPPED from 500716 (the CLOSED 2024 market) to 2026 market 630858 (Will the Republicans win the New Jersey Senate race in 2026?; Poly 0.018, Kalshi-consistent).] REP wins senate:new jersey (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 283, exchange_id: 972}
+    polymarket:
+      market_id: "630858"
+      yes_token_id: "80469582416211324277551196813384851504222711072116234686695188046152640511225"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  new_jersey_senate_dem:
+    description: "[2026-10-09 REMAPPED from 500715 (the CLOSED 2024 market) to 2026 market 630857 (Will the Democrats win the New Jersey Senate race in 2026?; Poly 0.975, Kalshi-consistent).] DEM wins senate:new jersey (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 282, exchange_id: 971}
+    polymarket:
+      market_id: "630857"
+      yes_token_id: "57191420250913616150846676905047388827581537310894242160546701872955141155912"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  new_mexico_senate_rep:
+    description: "REP wins senate:new mexico (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 285, exchange_id: 974}
+    polymarket:
+      market_id: "630871"
+      yes_token_id: "47410821361368319377218522333433306313753572972827491807608363074924233552004"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  new_mexico_senate_dem:
+    description: "DEM wins senate:new mexico (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 284, exchange_id: 973}
+    polymarket:
+      market_id: "630870"
+      yes_token_id: "86827974851753312617441915824618617861250657564707166327567168877893121374182"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  north_carolina_senate_rep:
+    description: "REP wins senate:north carolina (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 278, exchange_id: 967}
+    polymarket:
+      market_id: "630884"
+      yes_token_id: "62831517509825405761763142539845746280269675872170259538293560849475982647892"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  north_carolina_senate_dem:
+    description: "DEM wins senate:north carolina (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 277, exchange_id: 966}
+    polymarket:
+      market_id: "630883"
+      yes_token_id: "107151098936186723859677628536733880558851060002514795735761427447010628440047"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  oregon_senate_rep:
+    description: "REP wins senate:oregon (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 288, exchange_id: 977}
+    polymarket:
+      market_id: "630899"
+      yes_token_id: "79489800771199803792838465972773376352837733018768490302999836500381020065853"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  oregon_senate_dem:
+    description: "DEM wins senate:oregon (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 287, exchange_id: 976}
+    polymarket:
+      market_id: "630898"
+      yes_token_id: "2092757373218904768373533040846280132805161861393140519418262456097465213332"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  south_carolina_senate_rep:
+    description: "REP wins senate:south carolina (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 290, exchange_id: 979}
+    polymarket:
+      market_id: "630925"
+      yes_token_id: "84368524152268016512433556151474175385160499638069024812438264090070245734708"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  south_carolina_senate_dem:
+    description: "DEM wins senate:south carolina (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 289, exchange_id: 978}
+    polymarket:
+      market_id: "630924"
+      yes_token_id: "30718966535311015751929217398361750334834655110246828806892843311659716192347"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  tennessee_senate_rep:
+    description: "REP wins senate:tennessee (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 363, exchange_id: 1052}
+    polymarket:
+      market_id: "630951"
+      yes_token_id: "23982348354062524972887126807952244605287433791462351968680411830837664790435"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  tennessee_senate_dem:
+    description: "DEM wins senate:tennessee (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 362, exchange_id: 1051}
+    polymarket:
+      market_id: "630950"
+      yes_token_id: "109770398277480657132311708823042764648778271467537669934185093015733099277755"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  texas_senate_dem:
+    description: "[2026-10-09 REMAPPED from 500618 (the CLOSED 2024 market) to 2026 market 630963 (Will the Democrats win the Texas Senate race in 2026?; Poly 0.625, Kalshi-consistent).] DEM wins senate:texas (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 293, exchange_id: 982}
+    polymarket:
+      market_id: "630963"
+      yes_token_id: "15290572385458522370285732869432740297199321382471116558439914335588167718663"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  virginia_senate_rep:
+    description: "[2026-10-09 REMAPPED from 500709 (the CLOSED 2024 market) to 2026 market 630977 (Will the Republicans win the Virginia Senate race in 2026?; Poly 0.023, Kalshi-consistent).] REP wins senate:virginia (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 364, exchange_id: 1053}
+    polymarket:
+      market_id: "630977"
+      yes_token_id: "30879673422883665658998557649780314115615509792114924412311244164523672753717"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  virginia_senate_dem:
+    description: "[2026-10-09 REMAPPED from 500708 (the CLOSED 2024 market) to 2026 market 630976 (Will the Democrats win the Virginia Senate race in 2026?; Poly 0.979, Kalshi-consistent).] DEM wins senate:virginia (2026); auto-matched via poly_coverage."
+    resolution_match: true
+    confidence: high
+    sig: {market_id: 295, exchange_id: 984}
+    polymarket:
+      market_id: "630976"
+      yes_token_id: "103672405579571940023321290271521195736672061427193452636021280058761450574865"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+  # ── 2026-10-06: targeted Polymarket search of every unmapped SIG race (party-winner markets only;
+  #    liquidity gate vol>=$5k & liq>=$10k & live CLOB mid & D+R≈1 [three-way NE/SD exempt]) ──
+  al_02_house_rep:
+    description: "REP wins al-02 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the AL-02 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1008}
+    polymarket:
+      market_id: "1280800"
+      yes_token_id: "110498646838643141699770234895735915394620065036723874056548571888067488950164"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $28642 liq $89253 clob_mid 0.745 D+R 1.0"
+  al_02_house_dem:
+    description: "DEM wins al-02 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the AL-02 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1007}
+    polymarket:
+      market_id: "1280801"
+      yes_token_id: "13189761649035136014216228195645475511361901020555722779072382901094466765019"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $42167 liq $91902 clob_mid 0.255 D+R 1.0"
+  alabama_senate_dem:
+    description: "DEM wins alabama senate (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democrats win the Alabama Senate race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 941}
+    polymarket:
+      market_id: "630627"
+      yes_token_id: "77232568388576878990477542833081311975859328857370439688711702313039178600550"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $5904 liq $30088 clob_mid 0.0155 D+R 0.981"
+  alabama_senate_rep:
+    description: "REP wins alabama senate (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republicans win the Alabama Senate race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 942}
+    polymarket:
+      market_id: "630628"
+      yes_token_id: "95119856323193627993348587708417756152568014985721929036628780323821873817569"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $7137 liq $17120 clob_mid 0.966 D+R 0.981"
+  az_01_house_rep:
+    description: "REP wins az-01 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the AZ-01 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 887}
+    polymarket:
+      market_id: "942082"
+      yes_token_id: "32591940863680290675071972744258239275874735179355360323845750782366119048535"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $21959 liq $35061 clob_mid 0.2 D+R 1.005"
+  az_01_house_dem:
+    description: "DEM wins az-01 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the AZ-01 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 886}
+    polymarket:
+      market_id: "942084"
+      yes_token_id: "67501795419284092111663134279812910460154992630407078593989658098590262577673"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $41397 liq $25894 clob_mid 0.805 D+R 1.005"
+  az_06_house_rep:
+    description: "REP wins az-06 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the AZ-06 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 889}
+    polymarket:
+      market_id: "942159"
+      yes_token_id: "91134056361940201893494305153220998213627095877115808251230716593928688430751"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $8170 liq $54853 clob_mid 0.175 D+R 0.995"
+  az_06_house_dem:
+    description: "DEM wins az-06 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the AZ-06 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 888}
+    polymarket:
+      market_id: "942162"
+      yes_token_id: "92489819804290368443943803966220296254525527906989333620579684623025259387169"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: false
+      notes: "vol $4479 liq $30394 clob_mid 0.82 D+R 0.995"
+  ca_22_house_rep:
+    description: "REP wins ca-22 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the CA-22 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 891}
+    polymarket:
+      market_id: "703685"
+      yes_token_id: "83305180123434328264942831061332161630642073183329159190029603770999556008804"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $17380 liq $49715 clob_mid 0.065 D+R 0.995"
+  ca_22_house_dem:
+    description: "DEM wins ca-22 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the CA-22 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 890}
+    polymarket:
+      market_id: "703686"
+      yes_token_id: "14880392203916951367210594044346675783187280368615720213876603794661640957466"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $8653 liq $25969 clob_mid 0.93 D+R 0.995"
+  ca_48_house_rep:
+    description: "REP wins ca-48 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the CA-48 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 893}
+    polymarket:
+      market_id: "1282824"
+      yes_token_id: "74883630455715593214751459772360468028930271344780030243472846680635150664331"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $16659 liq $49385 clob_mid 0.085 D+R 0.98"
+  ca_48_house_dem:
+    description: "DEM wins ca-48 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the CA-48 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 892}
+    polymarket:
+      market_id: "1282825"
+      yes_token_id: "59802490472036913873496121286677427483662122509187681183126522612013504797043"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $18341 liq $22746 clob_mid 0.895 D+R 0.98"
+  co_03_house_rep:
+    description: "REP wins co-03 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the CO-03 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 895}
+    polymarket:
+      market_id: "942301"
+      yes_token_id: "50051241364929222895693566081605692346197807854055532008099278772035698770870"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $9059 liq $57960 clob_mid 0.725 D+R 0.99"
+  co_03_house_dem:
+    description: "DEM wins co-03 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the CO-03 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 894}
+    polymarket:
+      market_id: "942304"
+      yes_token_id: "24395104702642353411948925889097630568855366590528757185881735998149149192479"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $13329 liq $54844 clob_mid 0.265 D+R 0.99"
+  co_04_house_rep:
+    description: "REP wins co-04 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the CO-04 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 897}
+    polymarket:
+      market_id: "1282880"
+      yes_token_id: "93912560256245525429984546771927493927155759286650495356669416323669943507847"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $25874 liq $64227 clob_mid 0.695 D+R 0.99"
+  co_04_house_dem:
+    description: "DEM wins co-04 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the CO-04 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 896}
+    polymarket:
+      market_id: "1282881"
+      yes_token_id: "21114904170244249083059864962815455303156569744726868991298626905734505722454"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $15192 liq $73003 clob_mid 0.295 D+R 0.99"
+  co_08_house_rep:
+    description: "REP wins co-08 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the CO-08 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 899}
+    polymarket:
+      market_id: "942324"
+      yes_token_id: "68021205636604056509276509067526372089338487160185591169779941190006739682906"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $10297 liq $49445 clob_mid 0.14 D+R 1.0"
+  co_08_house_dem:
+    description: "DEM wins co-08 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the CO-08 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 898}
+    polymarket:
+      market_id: "942325"
+      yes_token_id: "111540362553565728751187438925859908575427409891112173540802616759607897153785"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $13837 liq $25219 clob_mid 0.86 D+R 1.0"
+  colorado_senate_dem:
+    description: "DEM wins colorado senate (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democrats win the Colorado Senate race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 945}
+    polymarket:
+      market_id: "630666"
+      yes_token_id: "68194463917260305435439145066031544476540679280823247532132832363696000101185"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $14319 liq $29801 clob_mid 0.9795 D+R 0.995"
+  colorado_senate_rep:
+    description: "REP wins colorado senate (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republicans win the Colorado Senate race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 946}
+    polymarket:
+      market_id: "630667"
+      yes_token_id: "94387913280398317052582281843978069916338462525042652614881277797162415545237"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $37022 liq $50134 clob_mid 0.0155 D+R 0.995"
+  fl_07_house_rep:
+    description: "REP wins fl-07 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the FL-07 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1010}
+    polymarket:
+      market_id: "1283000"
+      yes_token_id: "28134558928888227948813381987057565018866784201189850460618625875753502909061"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $15126 liq $59546 clob_mid 0.65 D+R 0.985"
+  fl_07_house_dem:
+    description: "DEM wins fl-07 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the FL-07 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1009}
+    polymarket:
+      market_id: "1283001"
+      yes_token_id: "48595994389294380413605252588038399089739882614541392889205137632817333951567"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $11463 liq $69878 clob_mid 0.335 D+R 0.985"
+  fl_09_house_rep:
+    description: "REP wins fl-09 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the FL-09 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1011}
+    polymarket:
+      market_id: "1283016"
+      yes_token_id: "14535768089815400273847771354088826502078939671987391994275253603566532191654"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $13815 liq $84128 clob_mid 0.695 D+R 0.99"
+  fl_09_house_dem:
+    description: "DEM wins fl-09 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the FL-09 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 900}
+    polymarket:
+      market_id: "1283017"
+      yes_token_id: "79995747672792115054716674475173589172446551682399210610955904338812431765392"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $9671 liq $101267 clob_mid 0.295 D+R 0.99"
+  fl_13_house_rep:
+    description: "REP wins fl-13 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the FL-13 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 901}
+    polymarket:
+      market_id: "942400"
+      yes_token_id: "93455992331247261582609314876051620484985877396129230715122967612916153735084"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: false
+      notes: "vol $4894 liq $17370 clob_mid 0.735 D+R 0.985"
+  fl_13_house_dem:
+    description: "DEM wins fl-13 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the FL-13 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1012}
+    polymarket:
+      market_id: "942401"
+      yes_token_id: "10797071126504743123515085716419360987107478266428470507477377131012323100968"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $7607 liq $21007 clob_mid 0.25 D+R 0.985"
+  fl_16_house_rep:
+    description: "REP wins fl-16 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the FL-16 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1014}
+    polymarket:
+      market_id: "1283064"
+      yes_token_id: "15056064872112675856476546973246733011825608647719006314444015066456521530341"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $10747 liq $24283 clob_mid 0.825 D+R 0.98"
+  fl_16_house_dem:
+    description: "DEM wins fl-16 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the FL-16 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1013}
+    polymarket:
+      market_id: "1283065"
+      yes_token_id: "106958534192257552731131706251545716690561203965658398267038573027472601603038"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $16438 liq $57225 clob_mid 0.155 D+R 0.98"
+  fl_20_house_rep:
+    description: "REP wins fl-20 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the FL-20 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1016}
+    polymarket:
+      market_id: "1283096"
+      yes_token_id: "99998409366814058509324978903464760824797071645181220838890227821177183933287"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $14952 liq $18790 clob_mid 0.024 D+R 0.979"
+  fl_20_house_dem:
+    description: "DEM wins fl-20 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the FL-20 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1015}
+    polymarket:
+      market_id: "1283097"
+      yes_token_id: "7861599392964570899063295249757924331582887786226297517280676454972508298031"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $19234 liq $14375 clob_mid 0.955 D+R 0.979"
+  fl_22_house_rep:
+    description: "REP wins fl-22 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the FL-22 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1018}
+    polymarket:
+      market_id: "1283112"
+      yes_token_id: "12503562961051694670561093522011301968376611490945772097489304120208051360657"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $27790 liq $75508 clob_mid 0.465 D+R 1.0"
+  fl_22_house_dem:
+    description: "DEM wins fl-22 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the FL-22 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1017}
+    polymarket:
+      market_id: "1283113"
+      yes_token_id: "9888897571794010752121877049436014412394792546592129944638664529404498838517"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $23594 liq $88801 clob_mid 0.535 D+R 1.0"
+  ia_01_house_rep:
+    description: "REP wins ia-01 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the IA-01 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 903}
+    polymarket:
+      market_id: "942432"
+      yes_token_id: "81505692847657373092454383020575585110499837274340613322588228385158919526454"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $13990 liq $50518 clob_mid 0.15 D+R 1.0"
+  ia_01_house_dem:
+    description: "DEM wins ia-01 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the IA-01 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 902}
+    polymarket:
+      market_id: "942433"
+      yes_token_id: "70626084342654528512319514273738308837103071303735022481383733918592331109261"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $26407 liq $34606 clob_mid 0.85 D+R 1.0"
+  ia_02_house_rep:
+    description: "REP wins ia-02 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the IA-02 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 905}
+    polymarket:
+      market_id: "1283288"
+      yes_token_id: "106183024660666533834062502031813793169247762855988914383541855843680035368680"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $15802 liq $67360 clob_mid 0.465 D+R 1.0"
+  ia_02_house_dem:
+    description: "DEM wins ia-02 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the IA-02 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 904}
+    polymarket:
+      market_id: "1283289"
+      yes_token_id: "24808423328362642269928339618535398875519836942812329525201323299850907438220"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $9864 liq $66372 clob_mid 0.535 D+R 1.0"
+  ia_03_house_rep:
+    description: "REP wins ia-03 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the IA-03 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 907}
+    polymarket:
+      market_id: "942444"
+      yes_token_id: "57265565746838221378365038901649729198937414663367899972498812653529682469258"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $6433 liq $30286 clob_mid 0.215 D+R 0.98"
+  ia_03_house_dem:
+    description: "DEM wins ia-03 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the IA-03 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 906}
+    polymarket:
+      market_id: "942445"
+      yes_token_id: "105724155866026243386456609196248574198788679514540436663740641053049222730942"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: false
+      notes: "vol $4724 liq $18296 clob_mid 0.765 D+R 0.98"
+  kentucky_senate_dem:
+    description: "DEM wins kentucky senate (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democrats win the Kentucky Senate race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 955}
+    polymarket:
+      market_id: "630759"
+      yes_token_id: "37649267567982889592011384409533519112993266261975620703097847510820818713285"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $7801 liq $56580 clob_mid 0.0275 D+R 0.992"
+  kentucky_senate_rep:
+    description: "REP wins kentucky senate (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republicans win the Kentucky Senate race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 956}
+    polymarket:
+      market_id: "630760"
+      yes_token_id: "48498511771232100148522166869811267217315069499419645745771730197179043728388"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $28736 liq $68272 clob_mid 0.965 D+R 0.992"
+  ky_04_house_rep:
+    description: "REP wins ky-04 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the KY-04 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 909}
+    polymarket:
+      market_id: "1283568"
+      yes_token_id: "4360584608318889792359076982751499707146205412289783849766659973245585132129"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $29554 liq $22276 clob_mid 0.96 D+R 0.981"
+  ky_04_house_dem:
+    description: "DEM wins ky-04 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the KY-04 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 908}
+    polymarket:
+      market_id: "1283569"
+      yes_token_id: "42051548638421204218374584975934315188715230248988738148555343950810939155465"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $16524 liq $29158 clob_mid 0.021 D+R 0.981"
+  me_02_house_rep:
+    description: "REP wins me-02 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the ME-02 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 911}
+    polymarket:
+      market_id: "3006482"
+      yes_token_id: "58199720710299853890561431207407462985075458766612922964054758657487509750362"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $11032 liq $65572 clob_mid 0.625 D+R 0.995"
+  me_02_house_dem:
+    description: "DEM wins me-02 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the ME-02 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 910}
+    polymarket:
+      market_id: "3006483"
+      yes_token_id: "96914958250546616618098909674490573266030506817741031776466109480920768219053"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $17309 liq $62585 clob_mid 0.37 D+R 0.995"
+  mi_07_house_rep:
+    description: "REP wins mi-07 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the MI-07 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1020}
+    polymarket:
+      market_id: "942721"
+      yes_token_id: "90239537120799856559379339880905629013239262905922873444067766874892362837014"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $11399 liq $59431 clob_mid 0.385 D+R 1.0"
+  mi_07_house_dem:
+    description: "DEM wins mi-07 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the MI-07 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1019}
+    polymarket:
+      market_id: "942722"
+      yes_token_id: "28428563408232158641020832230598845099279456308678642815367173717175353290703"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $25069 liq $56231 clob_mid 0.615 D+R 1.0"
+  mi_10_house_rep:
+    description: "REP wins mi-10 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the MI-10 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1022}
+    polymarket:
+      market_id: "942774"
+      yes_token_id: "43752127134995564310826939255040140810170663034403700378883950354967468648845"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: false
+      notes: "vol $3040 liq $81013 clob_mid 0.335 D+R 0.98"
+  mi_10_house_dem:
+    description: "DEM wins mi-10 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the MI-10 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1021}
+    polymarket:
+      market_id: "942776"
+      yes_token_id: "75685534826787951976275953631896177236439299709473517876953614908104349066066"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $5702 liq $60438 clob_mid 0.645 D+R 0.98"
+  mn_01_house_rep:
+    description: "REP wins mn-01 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the MN-01 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1024}
+    polymarket:
+      market_id: "1283848"
+      yes_token_id: "58414915443056575600546845688231939406497093430617962204950899073959516863962"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $17531 liq $35122 clob_mid 0.755 D+R 0.98"
+  mn_01_house_dem:
+    description: "DEM wins mn-01 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the MN-01 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1023}
+    polymarket:
+      market_id: "1283849"
+      yes_token_id: "53556044615407667948482140924138670085564709060050296606327145637179427254399"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $30612 liq $31902 clob_mid 0.225 D+R 0.98"
+  mn_02_house_rep:
+    description: "REP wins mn-02 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the MN-02 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1026}
+    polymarket:
+      market_id: "942819"
+      yes_token_id: "27227352588644125911835255791745199294766435051633840882741518772610280264133"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $31139 liq $54766 clob_mid 0.034 D+R 0.952"
+  mn_02_house_dem:
+    description: "DEM wins mn-02 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the MN-02 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1025}
+    polymarket:
+      market_id: "942820"
+      yes_token_id: "101761583924149127934699530188897560119595562747749947811419542814081248785009"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $28181 liq $45826 clob_mid 0.9175 D+R 0.952"
+  mt_01_house_rep:
+    description: "REP wins mt-01 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the MT-01 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 913}
+    polymarket:
+      market_id: "942841"
+      yes_token_id: "70720420928389492978842914190430712299346582376255109200751838945374631181994"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $20825 liq $77897 clob_mid 0.67 D+R 0.985"
+  mt_01_house_dem:
+    description: "DEM wins mt-01 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the MT-01 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 912}
+    polymarket:
+      market_id: "942843"
+      yes_token_id: "94033987553817825990709512567031751048276730850154145976615728913102874968691"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $28383 liq $78527 clob_mid 0.315 D+R 0.985"
+  ne_02_house_rep:
+    description: "REP wins ne-02 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the NE-02 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 915}
+    polymarket:
+      market_id: "942877"
+      yes_token_id: "9261962954796206285247745021195981577055668829876152281558354142057545087402"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $8996 liq $53398 clob_mid 0.073 D+R 0.988"
+  ne_02_house_dem:
+    description: "DEM wins ne-02 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the NE-02 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 914}
+    polymarket:
+      market_id: "942878"
+      yes_token_id: "83966667308824872880342632752673759552233526664290166226784097408878282862076"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $38320 liq $29396 clob_mid 0.915 D+R 0.988"
+  nebraska_senate_dem:
+    description: "DEM wins nebraska senate (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democrats win the Nebraska Senate race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 968}
+    polymarket:
+      market_id: "634891"
+      yes_token_id: "55269299240433422758148290868724152324629587438760275683104577693660207425448"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $104631 liq $63610 clob_mid 0.001 D+R 0.736"
+  nebraska_senate_rep:
+    description: "REP wins nebraska senate (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republicans win the Nebraska Senate race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 970}
+    polymarket:
+      market_id: "634892"
+      yes_token_id: "92576281548134350814800877416860562553699794074017301653635964206220838638047"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $263571 liq $119777 clob_mid 0.735 D+R 0.736"
+  nj_07_house_rep:
+    description: "REP wins nj-07 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the NJ-07 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 917}
+    polymarket:
+      market_id: "942978"
+      yes_token_id: "89007958027779859965143280233607680085743023530197549682171151954048549979817"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $21529 liq $55342 clob_mid 0.08 D+R 0.985"
+  nj_07_house_dem:
+    description: "DEM wins nj-07 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the NJ-07 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 916}
+    polymarket:
+      market_id: "942979"
+      yes_token_id: "11150104041135923402729603235169264788695551846877266424704836556138704136153"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $22516 liq $34319 clob_mid 0.905 D+R 0.985"
+  ny_13_house_rep:
+    description: "REP wins ny-13 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the NY-13 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 919}
+    polymarket:
+      market_id: "1284298"
+      yes_token_id: "81557957224614719909606514321678071196063005584137638675672000952860345431216"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $12516 liq $18897 clob_mid 0.0235 D+R 0.996"
+  ny_13_house_dem:
+    description: "DEM wins ny-13 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the NY-13 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 918}
+    polymarket:
+      market_id: "1284299"
+      yes_token_id: "58170582826434624369183137827470621458750832571934268895241793899476487858088"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $27409 liq $14746 clob_mid 0.9725 D+R 0.996"
+  ny_17_house_rep:
+    description: "REP wins ny-17 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the NY-17 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 921}
+    polymarket:
+      market_id: "943440"
+      yes_token_id: "100483443247041044563874634953278400972311005965822139457018312114391318359850"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $25176 liq $80751 clob_mid 0.365 D+R 1.0"
+  ny_17_house_dem:
+    description: "DEM wins ny-17 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the NY-17 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 920}
+    polymarket:
+      market_id: "943441"
+      yes_token_id: "51139697479054469944236132595348770797766976112763062697989474877845630491882"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $21811 liq $78231 clob_mid 0.635 D+R 1.0"
+  oklahoma_senate_dem:
+    description: "DEM wins oklahoma senate (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democrats win the Oklahoma Senate race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1072}
+    polymarket:
+      market_id: "631030"
+      yes_token_id: "112281295057865404870041957222562306206517476142557838682690649172966968734671"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $6856 liq $37770 clob_mid 0.014 D+R 0.998"
+  oklahoma_senate_rep:
+    description: "REP wins oklahoma senate (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republicans win the Oklahoma Senate race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 975}
+    polymarket:
+      market_id: "631031"
+      yes_token_id: "83554519035704522672644117478876258278018394754028161940314277335853541553559"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $19728 liq $24918 clob_mid 0.9835 D+R 0.998"
+  pa_01_house_rep:
+    description: "REP wins pa-01 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the PA-01 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 923}
+    polymarket:
+      market_id: "943748"
+      yes_token_id: "108230243496498344855407302843123554399616537057761543327780472018667198839068"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $13055 liq $98887 clob_mid 0.605 D+R 0.99"
+  pa_01_house_dem:
+    description: "DEM wins pa-01 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the PA-01 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 922}
+    polymarket:
+      market_id: "943749"
+      yes_token_id: "90438836256571410927299008367228796312209722771624666597034907143954367060240"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $17827 liq $110787 clob_mid 0.385 D+R 0.99"
+  pa_07_house_rep:
+    description: "REP wins pa-07 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the PA-07 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 925}
+    polymarket:
+      market_id: "943796"
+      yes_token_id: "56412855186822728853119072474894085602768054645914780515455268260878947887549"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $8760 liq $42898 clob_mid 0.135 D+R 0.985"
+  pa_07_house_dem:
+    description: "DEM wins pa-07 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the PA-07 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 924}
+    polymarket:
+      market_id: "943797"
+      yes_token_id: "37713776886536763857380242322222367371582682723176215910322979366716585040762"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $25454 liq $25640 clob_mid 0.85 D+R 0.985"
+  pa_08_house_rep:
+    description: "REP wins pa-08 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the PA-08 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 927}
+    polymarket:
+      market_id: "943942"
+      yes_token_id: "57072421827554294140721361338343029545070199210958375988932007732626623305617"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $10996 liq $61871 clob_mid 0.285 D+R 0.98"
+  pa_08_house_dem:
+    description: "DEM wins pa-08 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the PA-08 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 926}
+    polymarket:
+      market_id: "943943"
+      yes_token_id: "91391435832155617612019982139435697661029161851437556799916148343508709382987"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $7315 liq $64462 clob_mid 0.695 D+R 0.98"
+  pa_10_house_rep:
+    description: "REP wins pa-10 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the PA-10 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 929}
+    polymarket:
+      market_id: "943954"
+      yes_token_id: "103572160941197360900419917573086716527751112441366358755475598989264153655130"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $7197 liq $40173 clob_mid 0.2 D+R 1.0"
+  pa_10_house_dem:
+    description: "DEM wins pa-10 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the PA-10 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 928}
+    polymarket:
+      market_id: "943955"
+      yes_token_id: "87725551185270618291722253233951821932371187994043126950008311468794742299797"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: false
+      notes: "vol $4937 liq $25407 clob_mid 0.8 D+R 1.0"
+  rhode_island_governor_dem:
+    description: "DEM wins rhode island governor (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democrats win the Rhode Island governor race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1073}
+    polymarket:
+      market_id: "629627"
+      yes_token_id: "12963869833838696349134591178892586509546549676681530057691780490969939726649"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $57330 liq $58448 clob_mid 0.97 D+R 0.987"
+  rhode_island_governor_rep:
+    description: "REP wins rhode island governor (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republicans win the Rhode Island governor race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1074}
+    polymarket:
+      market_id: "629628"
+      yes_token_id: "102532646565376609462398061495436415751549869365588135784659237547896983513156"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $10587 liq $45552 clob_mid 0.0175 D+R 0.987"
+  rhode_island_senate_dem:
+    description: "DEM wins rhode island senate (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democrats win the Rhode Island Senate race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1076}
+    polymarket:
+      market_id: "630911"
+      yes_token_id: "77004273724753899183699441849597881417275931290950171679615354396048734034984"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $7516 liq $25128 clob_mid 0.993 D+R 1.001"
+  rhode_island_senate_rep:
+    description: "REP wins rhode island senate (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republicans win the Rhode Island Senate race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1077}
+    polymarket:
+      market_id: "630912"
+      yes_token_id: "18128207363125529330540526475108389147728645885887417700651189282375630645842"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $19055 liq $32564 clob_mid 0.008 D+R 1.001"
+  south_carolina_governor_dem:
+    description: "DEM wins south carolina governor (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democrats win the South Carolina governor race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 881}
+    polymarket:
+      market_id: "629640"
+      yes_token_id: "69673263487139231624315897585768201230841320475352635832819992690850228911127"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $8834 liq $53142 clob_mid 0.047 D+R 0.992"
+  south_carolina_governor_rep:
+    description: "REP wins south carolina governor (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republicans win the South Carolina governor race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 882}
+    polymarket:
+      market_id: "629641"
+      yes_token_id: "115258259561547414610995893322363332894307320697384633557391293684664191320185"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $10057 liq $38013 clob_mid 0.945 D+R 0.992"
+  south_dakota_senate_dem:
+    description: "DEM wins south dakota senate (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democrats win the South Dakota Senate race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 980}
+    polymarket:
+      market_id: "630937"
+      yes_token_id: "67967023811721834738685695249992484419619114809767608640505747182577663027691"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $13453 liq $42029 clob_mid 0.0015 D+R 0.921 — THREE-WAY race (independent Brian Bengs ~5.5%); each party market resolves on its own party, polarity verified by question text (operator-approved 2026-10-06)"
+  south_dakota_senate_rep:
+    description: "REP wins south dakota senate (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republicans win the South Dakota Senate race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 981}
+    polymarket:
+      market_id: "630938"
+      yes_token_id: "90757273431062483956880101601137522271949785755347720675502304224330457712154"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $30271 liq $41839 clob_mid 0.92 D+R 0.921 — THREE-WAY race (independent Brian Bengs ~5.5%); each party market resolves on its own party, polarity verified by question text (operator-approved 2026-10-06)"
+  tn_05_house_rep:
+    description: "REP wins tn-05 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the TN-05 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1030}
+    polymarket:
+      market_id: "1284767"
+      yes_token_id: "70611387410738959528084339484893630361746409691183277603893453160832832415748"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $29278 liq $24804 clob_mid 0.915 D+R 0.98"
+  tn_05_house_dem:
+    description: "DEM wins tn-05 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the TN-05 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1029}
+    polymarket:
+      market_id: "1284768"
+      yes_token_id: "21093900327085732156538279868500731871043932639237011371281062480462349465304"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $36892 liq $49226 clob_mid 0.0645 D+R 0.98"
+  tx_23_house_rep:
+    description: "REP wins tx-23 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the TX-23 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 935}
+    polymarket:
+      market_id: "1284959"
+      yes_token_id: "55410211684588113064622608223269234944992958173935625527924582089831994856267"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $42740 liq $69390 clob_mid 0.625 D+R 1.01"
+  tx_23_house_dem:
+    description: "DEM wins tx-23 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the TX-23 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 934}
+    polymarket:
+      market_id: "1284960"
+      yes_token_id: "61226688777298855109760287075145560866932162430262148603800321887784593630496"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $31950 liq $67408 clob_mid 0.385 D+R 1.01"
+  tx_28_house_rep:
+    description: "REP wins tx-28 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the TX-28 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 937}
+    polymarket:
+      market_id: "944221"
+      yes_token_id: "102134576754598286649546885868416989707545637875943269439533353198498871476278"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $6343 liq $55220 clob_mid 0.105 D+R 0.99"
+  tx_28_house_dem:
+    description: "DEM wins tx-28 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the TX-28 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 936}
+    polymarket:
+      market_id: "944222"
+      yes_token_id: "84241107374483193244606511118129186494443849681135554558545774792234903960353"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: false
+      notes: "vol $4835 liq $31088 clob_mid 0.885 D+R 0.99"
+  va_02_house_rep:
+    description: "REP wins va-02 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the VA-02 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 939}
+    polymarket:
+      market_id: "944289"
+      yes_token_id: "10986108013063722112541718847525294234187960385441756998469502203421948473299"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $24822 liq $71411 clob_mid 0.185 D+R 1.0"
+  va_02_house_dem:
+    description: "DEM wins va-02 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the VA-02 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1032}
+    polymarket:
+      market_id: "944290"
+      yes_token_id: "113775721914358731979638137579752258137123447875996657512004068518320376669224"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $19409 liq $45353 clob_mid 0.815 D+R 1.0"
+  va_05_house_rep:
+    description: "REP wins va-05 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the VA-05 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1034}
+    polymarket:
+      market_id: "1285079"
+      yes_token_id: "83253007588985953900662535978265304048199216427463571583210985764316132662845"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $55703 liq $45378 clob_mid 0.78 D+R 0.995"
+  va_05_house_dem:
+    description: "DEM wins va-05 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the VA-05 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1033}
+    polymarket:
+      market_id: "1285080"
+      yes_token_id: "30424541292784877350495001354252975055952568624850695789713995653053526735723"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $57057 liq $47011 clob_mid 0.215 D+R 0.995"
+  va_07_house_rep:
+    description: "REP wins va-07 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the VA-07 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1035}
+    polymarket:
+      market_id: "944297"
+      yes_token_id: "13432621903631649165156306037190483686486704889711495381938238490251535633776"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $9974 liq $41529 clob_mid 0.0385 D+R 0.995"
+  va_07_house_dem:
+    description: "DEM wins va-07 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the VA-07 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 940}
+    polymarket:
+      market_id: "944298"
+      yes_token_id: "98075623222143547346037366837071572541450376316433615657989340175250414958486"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $6531 liq $19749 clob_mid 0.9565 D+R 0.995"
+  wa_03_house_rep:
+    description: "REP wins wa-03 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the WA-03 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1037}
+    polymarket:
+      market_id: "944313"
+      yes_token_id: "11450408400059654095752682163375174616927289912740528299907491682505834882757"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $14079 liq $62032 clob_mid 0.1 D+R 0.995"
+  wa_03_house_dem:
+    description: "DEM wins wa-03 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the WA-03 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1036}
+    polymarket:
+      market_id: "944314"
+      yes_token_id: "62003269433640683744291727761785528693342099533191419822618434570267086928393"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $26214 liq $29962 clob_mid 0.895 D+R 0.995"
+  west_virginia_senate_dem:
+    description: "DEM wins west virginia senate (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democrats win the West Virginia Senate race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 985}
+    polymarket:
+      market_id: "630989"
+      yes_token_id: "110692470670299760609405767524469998656804613573367102042492015567399413436772"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $5351 liq $40921 clob_mid 0.0115 D+R 0.993"
+  west_virginia_senate_rep:
+    description: "REP wins west virginia senate (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republicans win the West Virginia Senate race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 986}
+    polymarket:
+      market_id: "630990"
+      yes_token_id: "103563721501446582736235672026641229118201717908465299005521462931975944512517"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $10852 liq $22600 clob_mid 0.982 D+R 0.993"
+  wi_01_house_rep:
+    description: "REP wins wi-01 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the WI-01 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1039}
+    polymarket:
+      market_id: "944333"
+      yes_token_id: "89691692433810708662044713280560196245651593280559985593960312638148344324296"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $6406 liq $50912 clob_mid 0.625 D+R 0.97"
+  wi_01_house_dem:
+    description: "DEM wins wi-01 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the WI-01 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1038}
+    polymarket:
+      market_id: "944334"
+      yes_token_id: "27864379735636967187061174592974985530606192477476602134082994654383977817622"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $7664 liq $60677 clob_mid 0.345 D+R 0.97"
+  wi_03_house_rep:
+    description: "REP wins wi-03 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republican Party win the WI-03 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1041}
+    polymarket:
+      market_id: "944341"
+      yes_token_id: "83772236231104306836754599890295414817047560410380925946355605231115771621017"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: false
+      notes: "vol $2636 liq $32052 clob_mid 0.26 D+R 0.995"
+  wi_03_house_dem:
+    description: "DEM wins wi-03 house (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democratic Party win the WI-03 House seat?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1040}
+    polymarket:
+      market_id: "944342"
+      yes_token_id: "98533340650340151055858210214498969967462170000657407829633743183238896087456"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $5069 liq $21306 clob_mid 0.735 D+R 0.995"
+  wyoming_governor_dem:
+    description: "DEM wins wyoming governor (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democrats win the Wyoming governor race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1005}
+    polymarket:
+      market_id: "629733"
+      yes_token_id: "27698880682601961151205903485139737259763277359865731443999905606295817799595"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: false
+      notes: "vol $2423 liq $39925 clob_mid 0.027 D+R 1.0"
+  wyoming_governor_rep:
+    description: "REP wins wyoming governor (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republicans win the Wyoming governor race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1006}
+    polymarket:
+      market_id: "629734"
+      yes_token_id: "110662231382210721528347530139180000273032668591469451320298639508988983810813"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $9203 liq $24478 clob_mid 0.9735 D+R 1.0"
+  wyoming_senate_dem:
+    description: "DEM wins wyoming senate (2026); 2026-10-06 targeted Polymarket search. Q: Will the Democrats win the Wyoming Senate race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1054}
+    polymarket:
+      market_id: "631002"
+      yes_token_id: "49797779751182114244550178900838522175054943127409025738411962628574218037267"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $5715 liq $57852 clob_mid 0.025 D+R 1.0"
+  wyoming_senate_rep:
+    description: "REP wins wyoming senate (2026); 2026-10-06 targeted Polymarket search. Q: Will the Republicans win the Wyoming Senate race in 2026?"
+    resolution_match: true
+    confidence: high
+    sig: {exchange_id: 1055}
+    polymarket:
+      market_id: "631003"
+      yes_token_id: "79928077180713102609948647660034580156932658823394290272651325523866637424642"
+      yes_outcome: "Yes"
+      polarity: direct
+      liquidity_ok: true
+      notes: "vol $13636 liq $35340 clob_mid 0.975 D+R 1.0"

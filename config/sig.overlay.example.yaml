@@ -1,0 +1,39 @@
+# ── sig-bot LOCAL CONFIG OVERLAY (example / template) ────────────────────────────────────────────────
+#
+# WHAT THIS IS
+#   The committed config/sig.yaml holds SAFE DEFAULTS (mode: SIM, every strategy off). The bot deep-merges
+#   a GITIGNORED overlay — config/sig.local.yaml — ON TOP of it at load (sig/config.py `_deep_merge`), and
+#   the overlay WINS. The overlay carries the operator's LIVE / deploy-only state, so it lives OUTSIDE git:
+#   no `git checkout .`, `git reset --hard`, or branch sync can ever revert the droplet to SIM or drop an
+#   override. If the overlay is MISSING, the committed SIM defaults stand (safe) — the bot will NOT trade
+#   live without this file present.
+#
+# HOW TO USE (on the droplet, /opt/sig-bot)
+#   cp config/sig.overlay.example.yaml config/sig.local.yaml   # then edit the values below for your deploy
+#   systemctl restart sig-bot.service
+#   # config/sig.local.yaml is gitignored (config/*.local.*) — git never touches it.
+#   # Alternatively point elsewhere: export SIG_CONFIG_OVERLAY=/abs/path/to/overlay.yaml
+#
+# MERGE SEMANTICS
+#   Nested mappings merge key-by-key; scalars AND lists (e.g. order_flow.markets) are REPLACED wholesale.
+#   Only keys you set here override the base — everything else comes from config/sig.yaml. Unknown/typo'd
+#   keys still FAIL LOUD (validation runs on the merged result).
+# ──────────────────────────────────────────────────────────────────────────────────────────────────────
+
+global:
+  mode: LIVE                       # the ONE value that must live here — a git op can no longer revert it to SIM
+  tournament_slug: "midterm-elections"
+
+cross_market:
+  enabled: true
+  min_divergence: 0.02             # droplet override
+
+order_flow:
+  enabled: true
+  stream_sizes: false              # WS feed is NBBO-only (no top-of-book size) ⇒ bounded /orderbook REST
+  max_markets: 8
+  book_poll_interval_s: 60
+  markets: [843, 842, 841, 840, 948, 947, 983, 856]   # the 8 polarity-verified liquid headline races
+
+event_trigger:
+  enabled: true
