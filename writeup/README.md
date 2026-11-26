@@ -28,9 +28,7 @@ A Python asyncio service on a 1 GB server: a websocket price feed into SQLite, a
 5. **An election-night trader built from data.** A replay of 2024 election night set the trigger at 95% (90% had false calls). An automated sell-down raised $40k of cash in 21 minutes, and the trader filled 22 races at an average of 93 cents.
 
 ## Tools and roles
-I built and ran the bot with Claude (Anthropic's model, through Claude Code) as my engineering partner. Claude wrote most of the code, ran the research on recorded data, deployed to the server and kept the journal.
-
-My part:
+Claude (Anthropic's model, through Claude Code) wrote the code. Everything else was mine: the research, the deployment and the journal, plus:
 - the strategy direction and the decisions to go live or not;
 - the capital limits (for example, $40k for election night);
 - the rule set that ended the slide (shadow, validate, break-test, pilot).

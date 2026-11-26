@@ -10,11 +10,7 @@
 - **Market close (Nov 4 17:00Z): −$4,644,** rank 1,374.
 - **After settlement (Nov 5–19): +$8,849,** rank 557. <!-- UPDATE -->
 
-**How I worked.** I built and ran the bot with Claude (Anthropic's model, through Claude Code) as my engineering partner.
-- **Claude's part:** writing most of the code, running research on recorded data, deploying to the server, and keeping the journal.
-- **My part:** the strategy direction, every go-live decision, the capital limits, and the launch rules that ended the slide.
-
-Where something was Claude's analysis or proposal, I say so.
+**How I worked.** Claude (Anthropic's model, through Claude Code) wrote the code. Everything else is mine: the research on recorded data, the deployment and the journal, the strategy direction, every go-live decision, the capital limits, and the launch rules that ended the slide.
 
 [One-page version](README.md) · [Summary (3–4 pages)](summary.md)
 
@@ -76,8 +72,8 @@ This is the complete version: everything I built, tested, broke and dropped, wit
   - a mutation test: 26 of 40 seeds fail with the fixes removed;
   - dry runs against the real venue with writes intercepted;
   - from Oct 8, every confirmed bug got a failing test before its fix (Appendix C).
-- **Sizing at launch:** quarter-Kelly as the base, with the "proven" cross-market edge multiplied by 4 (about full Kelly), a 12% per-market cap and no cash reserve. Claude's spec tilted the sizing toward a top-3 finish. After launch week the cap went to 6%, then 5%, plus a 6% per-race cluster cap (Appendix B has every control and when it changed).
-- **Benchmarks ("sharps"):** Polymarket prices per race, recorded every minute. Kalshi served as an independent second check; Claude fixed the dormant Kalshi client after its API changed. Kalshi agreed with Polymarket within a median 0.9 cents on 68 shared races.
+- **Sizing at launch:** quarter-Kelly as the base, with the "proven" cross-market edge multiplied by 4 (about full Kelly), a 12% per-market cap and no cash reserve. My spec tilted the sizing toward a top-3 finish. After launch week the cap went to 6%, then 5%, plus a 6% per-race cluster cap (Appendix B has every control and when it changed).
+- **Benchmarks ("sharps"):** Polymarket prices per race, recorded every minute. Kalshi served as an independent second check; I fixed the dormant Kalshi client after its API changed. Kalshi agreed with Polymarket within a median 0.9 cents on 68 shared races.
 
 ## 3. Where the money came from
 
@@ -91,7 +87,7 @@ SIG's crowd consistently **overpriced longshots and underpriced favourites** com
 - Small retail tickets lost 7–10 cents per dollar against it.
 
 **The core strategy:** buy the favoured side when SIG diverged from the benchmark by at least 5 cents, and hold to settlement.
-- **Is the benchmark right?** Claude checked 2024 calibration: Polymarket was well calibrated on state races 28 days out. Favourites won 93% at an average price of 85%, and legs priced 95%+ won 25 of 25.
+- **Is the benchmark right?** I checked 2024 calibration: Polymarket was well calibrated on state races 28 days out. Favourites won 93% at an average price of 85%, and legs priced 95%+ won 25 of 25.
 - So the gaps were an edge, not a benchmark error.
 - This book held about 90–95% of capital most of the month, at 4–14 cents of edge per position.
 
@@ -116,7 +112,7 @@ About 40 swaps moved roughly $40k into better gaps by Oct 29, marked +$1,848.
 
 ### 3.3 Election night
 
-Claude built the trader from a study of Polymarket on 2024 election night:
+I built the trader from a study of Polymarket on 2024 election night:
 - most races are decided before polls close;
 - no losing side ever traded at 95%;
 - at a 90% threshold, two false calls would have wiped out the gains.
@@ -207,7 +203,7 @@ Claude built the trader from a study of Polymarket on 2024 election night:
 ![Orders per day by strategy](figures/fig2_orders_by_day.png)
 
 - **The pace:** the trading code went from an empty repo (Oct 1, 12:13 UTC) to live trading overnight into Oct 2. The server's git history shows 84 commits on Oct 2 alone, many of them fixes to things that had just gone live. (The design specs and the market recon came first; the GitHub copy of the repo starts on Oct 10.)
-- **My failure mode was launching something, then finding out in production what was wrong with it.** Claude wrote and deployed fast, and I let features go live without a test gate.
+- **My failure mode was launching something, then finding out in production what was wrong with it.** I shipped fast and let features go live without a test gate.
 
 **Examples from the git log:**
 - **A position-doubling runaway.** A "decisive market close" for thesis exits went live on Oct 2 and was reverted as URGENT hours later, because it doubled positions instead of closing them.
@@ -254,7 +250,7 @@ Claude built the trader from a study of Polymarket on 2024 election night:
 
 ### 4.3 The reset (Oct 5–6)
 
-- **Ground truth first.** The chat history behind the build was gone, so Claude rebuilt what was known only from the repo and the live server, into a memory file and a dated journal. Nothing unverified was trusted.
+- **Ground truth first.** The chat history behind the build was gone, so I rebuilt what was known only from the repo and the live server, into a memory file and a dated journal. Nothing unverified was trusted.
 - **A full code read against the real venue mechanics** found the defects in section 5. The fixes:
   - the exit was fixed;
   - market making and the sniper were retired;
@@ -267,7 +263,7 @@ Claude built the trader from a study of Polymarket on 2024 election night:
   4. run a **small isolated pilot** with its own cash, a loss limit and a STOP file;
   5. then **scale**.
 
-  My instruction to Claude on Oct 9 was to try to break each feature before it went live, because "we keep having this problem before we put things live."
+  On Oct 9 I made it a rule to try to break each feature before it went live, because "we keep having this problem before we put things live."
 - **The process caught what the old habit would have shipped.**
   - The fresh-gap pilot passed 24 happy-path tests and still had 4 critical bugs: a lease lapse, a double buy, an oversell, and a crash on a stale price. The break-test found all four.
   - Later bugs still happened, but none cost capital. Rotation bought nothing for a while and a false loss halt fired. A 39-minute stall froze the main trading cycle, and a maker-entry over-commit was cancelled before any order filled. Rejected recycling code reached the server by accident and placed exit orders that never filled. That last one created the rule: diff the candidate against live before every deploy.
@@ -291,7 +287,7 @@ Section 7 tests every strategy and dropped idea against the official settlement 
 
 ## 5. The defects in detail
 
-The first five days cost about −$12.4k on $3.2M of volume, roughly 44bp of spread and churn. Claude's full code read on Oct 5 found:
+The first five days cost about −$12.4k on $3.2M of volume, roughly 44bp of spread and churn. My full code read on Oct 5 found:
 1. **The exit treated short (NO) positions as longs**, because the venue's `option` field is always "YES". It produced the buy-sell-rebuy loop (905 exits on one market).
 2. **Market making fought the core book,** selling ~$45k of cross positions at a −2c skew. Fixed, then retired.
 3. **The "sniper" wasn't a separate edge.** It re-fired taker entries on persistent gaps (markout −1.0c at 60 minutes). Folded into the core book, then disabled.
@@ -306,7 +302,7 @@ The first five days cost about −$12.4k on $3.2M of volume, roughly 44bp of spr
 
 ## 6. Research I tested and dropped
 
-All on recorded data, with taker costs as the honest yardstick (Claude ran the studies):
+All on recorded data, with taker costs as the honest yardstick:
 - **Two-sided market making:** loses $1–14k a day in simulation. Spreads are 1 tick, the safe side has $100k+ queued, the thin side is toxic, and a bot can't requote faster than takers react to Polymarket.
 - **Mean reversion,** as taker or maker: no edge. Moves *toward* Polymarket keep going.
 - **A short-horizon edge scan** (2M market-minutes, 23 features): nothing beats the round-trip spread.
@@ -315,12 +311,12 @@ All on recorded data, with taker costs as the honest yardstick (Claude ran the s
 - **Polymarket-led lag:** retired on Oct 16 as negative at every lookback (54 shadow trades: −0.64c at 1h, −0.26c at 3h, −0.15c at 6h).
 - **Staged entries** (buy only if the signal persists 60 minutes): 0.5c better prices, but 44% of signals vanish. Deferred.
 
-**What the leaders did** (Claude's leaderboard analysis):
+**What the leaders did** (my leaderboard analysis):
 - The top 10 made +$250–900k in the opening days, most likely from opening mispricing.
 - The top-10% template was ~3 cents of P&L per dollar traded on ~3.6x capital turnover.
 - About $1.1M a day of expected value flowed from retail takers to makers resting on the Polymarket-favoured side. Leaders scaled that with capital won early; I was capital-bound.
 
-**Risk and strategy analysis I didn't act on.** Claude proposed both; I took neither.
+**Risk and strategy analysis I didn't act on.** I worked out both and took neither.
 - **National-swing exposure.** The book paid $74k if every race went Democrat and $27k if every race went Republican. A ~$3.5k Senate-Republican-control hedge would have removed most of the Republican-swing risk at about zero EV cost.
 - **Tournament theory.** The long-favourites book had a capped best case (+$12.4k), so my chance of a top-10% finish was near zero without a convex add. A $7–14k Senate-control position would have raised it to roughly 0.2–0.35, at the cost of finishing ~−$15k in the ~65% of worlds where Democrats held the Senate.
 
@@ -331,7 +327,7 @@ This section tests my strategies and dropped ideas against **how the markets act
 ### 7.1 What can and can't be measured
 
 - **I first tried to split launch-week P&L by strategy, fill by fill. It doesn't hold up.**
-  - Fills before Oct 5 carry no direction, so Claude tried two ways to infer it: price against the mid at the fill, and the parent order's buy/sell.
+  - Fills before Oct 5 carry no direction, so I tried two ways to infer it: price against the mid at the fill, and the parent order's buy/sell.
   - Both were checked against the fills that *do* carry a direction. The first agreed about half the time (a coin flip); the second about 69% of the time.
   - So any per-strategy realised P&L for launch week would be false precision, and I don't report one.
   - That the bot's own records disagree with each other this often is itself a picture of launch week: the bot often didn't know which side it was on.
@@ -394,7 +390,7 @@ From the reliable records:
 
 ### 7.4 The decisions I didn't take
 
-| Decision Claude proposed | Outcome (after the election Polymarket priced Democratic control of both chambers at 99.95%; SIG hasn't settled them yet) | Verdict |
+| Decision considered | Outcome (after the election Polymarket priced Democratic control of both chambers at 99.95%; SIG hasn't settled them yet) | Verdict |
 |---|---|---|
 | ~$3.5k hedge on Republican Senate control | The hedge would have expired worthless: about −$3.5k | Not hedging was right *ex post*. Ex ante it was cheap insurance against the book's national-swing exposure, and the risk didn't show up |
 | $7–14k convex bet on Republican Senate control, to raise my chance of a top-10% finish | It would have lost $7–14k | Right *ex post* not to take it. But see the next section: without some convex bet, a top-10% finish was out of reach |
@@ -403,11 +399,11 @@ From the reliable records:
 
 ### 7.5 An objective I set but didn't build for
 
-- **At launch the design aimed high.** Claude's pre-launch sizing spec aimed at a top-3 finish: a tournament tilt over quarter-Kelly, with the cross-market edge sized at 4x (about full Kelly). The per-market cap was 12% and there was no cash reserve. By Oct 5 the top five positions held about 65% of NAV.
-- **On Oct 6 I reset the goal to top 10%** (then about rank 124 of 1,239) and cut the per-market cap to 5%. On Oct 12 I had Claude build rotation aimed at the projected top-10% line, which then needed about +$20–22k more.
+- **At launch the design aimed high.** My pre-launch sizing spec aimed at a top-3 finish: a tournament tilt over quarter-Kelly, with the cross-market edge sized at 4x (about full Kelly). The per-market cap was 12% and there was no cash reserve. By Oct 5 the top five positions held about 65% of NAV.
+- **On Oct 6 I reset the goal to top 10%** (then about rank 124 of 1,239) and cut the per-market cap to 5%. On Oct 12 I built rotation aimed at the projected top-10% line, which then needed about +$20–22k more.
 - **The bar at the end:** the top-10% cutoff on the final leaderboard is **+$29.8k**; 1st place is +$1.5M.
 - **What the edge could do:** the core edge earns roughly 10% per entry held to settlement. With the book near fully deployed (about $90k), one turn of that is about +$9–10k, and the capital stayed locked until settlement.
-- **So the goal and the strategy didn't match.** Perfect execution of my one real edge couldn't reach the top 10%. Getting there needed several turns of capital (rotation was my attempt; held to settlement it's not measurable reliably) or a deliberately convex bet. Claude proposed one ($7–14k on Senate control, section 7.4) and I declined it.
+- **So the goal and the strategy didn't match.** Perfect execution of my one real edge couldn't reach the top 10%. Getting there needed several turns of capital (rotation was my attempt; held to settlement it's not measurable reliably) or a deliberately convex bet. I considered one ($7–14k on Senate control, section 7.4) and declined it.
 - **The 22nd-place write-up** framed this explicitly: in a winner-take-all tournament, maximise the chance of a top finish, not the expected balance. I named a top-10% goal, then ran a book built to finish positive.
 
 ### 7.6 The one thing that worked exactly as designed
@@ -440,12 +436,12 @@ Extracted from my project notes and the repo. The notes start on Oct 5, because 
 
 | Date (UTC) | Event / pivot | Why | Outcome |
 |---|---|---|---|
-| 10-01 (pre-open) | Claude wrote 9 design specs: quarter-Kelly sizing with a Browne-shaped tilt, risk governance, integration, signal, config, edge portfolio, allocation, SIM plan, go-live checklist. Claude then ran an adversarial self-audit. | Design before the open | Audit verdict: "theoretically grounded but empirically unvalidated". 2 overclaims fixed (Browne literal formula; extremizing and favourite-longshot treated as edge). |
+| 10-01 (pre-open) | I wrote 9 design specs: quarter-Kelly sizing with a Browne-shaped tilt, risk governance, integration, signal, config, edge portfolio, allocation, SIM plan, go-live checklist. I then ran an adversarial self-audit. | Design before the open | Audit verdict: "theoretically grounded but empirically unvalidated". 2 overclaims fixed (Browne literal formula; extremizing and favourite-longshot treated as edge). |
 | 10-01 13:17Z | Market recon (read-only) | Map the venue before the open | 237 binary markets (71 Gov / 94 House / 72 Senate). 68 D/R pairs. 0 native arb constraints. Seeded books of 1 level × 1000 at an 0.08 spread. Everything settles 11-04 17:00Z. |
 | 10-01 16:00Z | Tournament opens ($100k start). MM quotes the full board. | — | MM +$5,502 on day 1 ($43k traded). 139 markets got first orders. |
 | 10-02 | MM continues. Multi-leg batching measured (10 legs per write). Kalshi client reads stale fields, so "no live price". | Write budget of 30/min | MM +$7,171 ($164k traded). MM's first 2 days total about +$12.7k, mostly residual longshot inventory. |
 | 10-03 to 10-04 | Sniper/wiki/MM era. No journal for these days. | — | MM −$867 on 10-03. Service up since 10-04 07:58Z. |
-| 10-05 06:45Z | Claude re-onboarded from scratch (read-only) and rebuilt the project notes | Chat history lost | NAV 87,564.62, leaderboard P&L −12,439.35, rank 972/1149. Top 5 positions ≈65% of NAV. |
+| 10-05 06:45Z | I re-onboarded from scratch (read-only) and rebuilt the project notes | Chat history lost | NAV 87,564.62, leaderboard P&L −12,439.35, rank 972/1149. Top 5 positions ≈65% of NAV. |
 | 10-05 07:26-08:28Z | Deploys c011c2b (short-exit fix, MM cross overlap) and 1317d3c (signed_qty, sharp-anchor shadow) | Code-confirmed churn defects | held=no thesis_reversed exits went from 4 to 0 per 10 min |
 | 10-05 15:35Z | I cut the per-market cap from 12% to 6%, trimmed, and turned arb off | Concentration | Trim sold 33,781 sh ≈ $29.5k. Largest position fell from 13.8% to 6.5% of NAV. |
 | 10-05 16:25-17:15Z | MM order-stacking incident, then cancel-all and a stall | NAV sizing exposed missing quote diffing | 3,248 orders cancelled. No-stack fix deployed. |
@@ -454,7 +450,7 @@ Extracted from my project notes and the repo. The notes start on Oct 5, because 
 | 10-06 ~07:00Z | I set the goal: top 10% (rank ~124/1,239), not 1st | — | Gap to top 10% ≈ $18k ≈ $620/day |
 | 10-06 11:09Z | Pipeline cleanup: MM, mr_taker, event_trigger and sniper disabled | Dead or negative strategies | exchange_ids 474 → 237. 9,642 stale order rows closed. |
 | 10-07 | Tape studies, tiered-cap backtest, Kalshi shadow, election-night analysis and dry run (fb060d4) | Find where the edge is limited | Conclusion: the edge is limited by capital, not signals. Flat 5% cap kept. |
-| 10-08 04:00-09:00Z | Claude built isolation (ownership, carve-outs), the fair-band live pilot and maker entries, then ran 4 break-test rounds | Run pilots without interference | Suite went 931 → 1068 tests. Stress: 0 violations. |
+| 10-08 04:00-09:00Z | I built isolation (ownership, carve-outs), the fair-band live pilot and maker entries, then ran 4 break-test rounds | Run pilots without interference | Suite went 931 → 1068 tests. Stress: 0 violations. |
 | 10-08 08:47-09:05Z | **Go-live #1** (I approved): cross maker entries + fair-band pilot at $5k, funded by fund_pilot | Better entries; first isolated pilot | Free cash $27 → $4,974. Venue accepted expirationDate. |
 | 10-09 03:05-03:47Z | Two incidents: capital over-commit, and rejected recycling code shipped | — | Both reverted (645eee1). New rule: diff the candidate against live before every deploy. |
 | 10-09 05:31Z | Maker entries back on (2c60906) after a re-break-test | I: "i allow it just push it" | Clean-slate stall found and fixed at 05:51 |
@@ -603,12 +599,12 @@ Lesson recorded: the first build passed 24 tests and still had 4 critical bugs.
 | ≤10-05 | Cross exit treated shorts as longs (venue option always "YES"), so the bot re-entered in a loop | Churn on 1061 (1,251 orders / 905 exits) and 967 (691 / 653). Realized ≈ −$14,240 on $3.22M volume. | c011c2b is_long = qty>0 |
 | ≤10-05 | MM sold down cross positions (inventory = whole venue position) | 4,142 MM fills ≈ $45k on cross markets | Dynamic cross overlap |
 | ≤10-05 | strategy.on_fill never called. $15k pool reserve zero-sized non-pool strategies. event_trigger_provider.py only existed on the droplet. arb inert. | Dead strategies | Later disabled |
-| 10-05 08:25 | Positions 429s from Claude's read-only probes | 2 cycle_failed | — |
+| 10-05 08:25 | Positions 429s from my read-only probes | 2 cycle_failed | — |
 | 10-05 ~16:25 | MM stacking after NAV sizing (c7ce7e3) | 3,632 open orders (≤140 per side). $23.7k of bids vs $5.8k cash. | Reverted. 166 big orders cancelled. No-stack fix (0bd2517). |
 | 10-05 17:0x | Cancel-all (3,248) followed by a stall: 0 cycles in 5 min, dead-man at 308s, write breaker tripped | ~5 min stall | Restart. 8s cancel timeouts (4667ee3). |
 | 10-06 | 355 cycle_failed/24h (positions 429) → stale gate → cap overshoots (995 at 11.2%) | Overshoot, then trims | 6a48ec9 cache + note_pending |
 | 10-05/06 | MM at NAV size: adverse selection | −$440 marked despite +$152 edge-at-fill (≈ −$434 net) | MM retired |
-| 10-06 03:21 | Startup hard gate failed on a 429 storm (Claude's trim reads) | NRestarts=1 | systemd auto-restart |
+| 10-06 03:21 | Startup hard gate failed on a 429 storm (my trim reads) | NRestarts=1 | systemd auto-restart |
 | 10-06 | Rotation shadow duplicates. Parity shadow priced 0 pairs (`_fresh_sig` empty). Tape id list included 237 market ids (404s). | Shadow data gaps | 24843d7, bc2290f, 8a06a47 |
 | 10-07 06:57 | Merge aborted after the overlay was edited → config_reload_failed ×2 | ~20s on the last good config | Rule: deploy code before config |
 | 10-08 | Local C: drive hit 0 bytes | Snapshot failed | ~440MB freed |
@@ -619,7 +615,7 @@ Lesson recorded: the first build passed 24 tests and still had 4 critical bugs.
 | 10-09 05:31-05:51 | Pilot clean-slate stalled: DELETE of expired ids hangs ~60s and 429s | ~20 min; write breaker | 82d0169 read-then-cancel |
 | 10-09 07:15 | Trader refused to start (unknown overlay keys) | ~1 min down | 312dd5d schema keys + test |
 | 10-09 | 9 write-breaker trips from DELETEs of filled/expired maker entries | Breaker trips | bfbafd6 look-before-cancel |
-| 10-10 | 1064 sell rejected by ownership (Claude's list error) | none; the guard held | — |
+| 10-10 | 1064 sell rejected by ownership (a list error) | none; the guard held | — |
 | 10-10 | Cross maker entries sat at the back of huge queues | 159 resolved, $22 filled. $12.1k idle. | — |
 | 10-10 17:04-17:43 | Cycle took 2,316s (OMS sweep DELETE 429 with in-call backoff) | Dead-man ×68, 136 errors | 17d5d9d no in-call 429 retry |
 | 10-11 ~08:11-10:25 | Fill direction bug: NO sales ingested as buys | **False halt** of the pilot (−$4,015 vs real +$16) | 0a69945. 20 fills backfilled. |

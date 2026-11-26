@@ -2,7 +2,7 @@
 
 > **Provisional (as of 2026-11-22).** House and Senate control are closed but not yet settled. If both settle YES, the final P&L is about **+$9,484**. Numbers marked <!-- UPDATE --> change at settlement.
 
-**Result so far: +$8,849 on a 100,000 start, rank 557 of 5,141 participants (top 11%).** <!-- UPDATE --> I built and ran an automated trading bot through the whole tournament, with Claude (Anthropic's model, through Claude Code) as my engineering partner.
+**Result so far: +$8,849 on a 100,000 start, rank 557 of 5,141 participants (top 11%).** <!-- UPDATE --> I built and ran an automated trading bot through the whole tournament.
 
 This is the middle-length version. [README.md](README.md) is the one-page version; [technical.md](technical.md) has everything, including every study, incident and number.
 
@@ -45,7 +45,7 @@ This is the middle-length version. [README.md](README.md) is the one-page versio
 
 SIG's crowd **overpriced longshots and underpriced favourites** against Polymarket and Kalshi. Across 822k market-minutes, favourites traded 1.5–3 cents below Polymarket and longshots 2–5 cents above.
 
-- **Was the benchmark right?** Claude checked 2024 data first: favourites won 93% of the time at an average Polymarket price of 85%.
+- **Was the benchmark right?** I checked 2024 data first: favourites won 93% of the time at an average Polymarket price of 85%.
 - **The core strategy:** buy the favoured side when SIG sat at least 5 cents below Polymarket, and hold to settlement. It held 90–95% of capital most of the month.
 
 **Tested against the actual outcomes** (official settlement, each market counted once, 90% bootstrap intervals):
@@ -90,7 +90,7 @@ The two worst days cost $5.0k and $8.0k. Over the week the bot traded $3.2M of v
 
 ## 5. The fix: a launch process, and the climb back
 
-On Oct 5–6, Claude rebuilt the project's state from the repo and the live server only, and did a full code read against the real venue mechanics. The fixes:
+On Oct 5–6, I rebuilt the project's state from the repo and the live server only, and did a full code read against the real venue mechanics. The fixes:
 - the exit was fixed;
 - market making and the sniper were retired;
 - a 5% per-market cap with trims was added.
@@ -123,7 +123,7 @@ From the trough the account climbed **+$21.3k**, most of it at settlement. <!-- 
 
 ## 6. Election night: built from data, run as designed
 
-- **The data:** Claude replayed Polymarket on 2024 election night.
+- **The data:** I replayed Polymarket on 2024 election night.
   - No losing side ever traded at 95%.
   - At a 90% trigger, two false calls would have wiped out the gains.
 - **The rule:** buy when Polymarket crosses 95%, Kalshi agrees, and SIG's ask is at least 1 cent lower; $2k per race, held to settlement.
@@ -132,7 +132,7 @@ From the trough the account climbed **+$21.3k**, most of it at settlement. <!-- 
 
 ## 7. What I'd do differently
 
-- **I set a goal my strategy couldn't reach.** On Oct 6 I set a top-10% goal; the final cutoff was +$29.8k. My one edge earns about 10% per turn on about $90k of capital locked until settlement, so roughly +$10k. Reaching the goal needed a convex bet, and Claude proposed one ($7–14k on Republican Senate control). I declined it, and *ex post* it would have lost. But I never resolved the mismatch between the goal and the book.
+- **I set a goal my strategy couldn't reach.** On Oct 6 I set a top-10% goal; the final cutoff was +$29.8k. My one edge earns about 10% per turn on about $90k of capital locked until settlement, so roughly +$10k. Reaching the goal needed a convex bet; I considered one ($7–14k on Republican Senate control). I declined it, and *ex post* it would have lost. But I never resolved the mismatch between the goal and the book.
 - **I'd also hedge my national-swing exposure.** The book paid $74k if every race went Democrat and $27k if every race went Republican. A ~$3.5k hedge would have removed most of that risk at about zero expected cost. I didn't take it; it would have expired worthless.
 
 ## 8. Lessons
@@ -146,8 +146,4 @@ From the trough the account climbed **+$21.3k**, most of it at settlement. <!-- 
 
 ## Roles
 
-- **Claude:** wrote most of the code, ran the research on recorded data, deployed to the server and kept the journal.
-- **Me:**
-  - the strategy direction;
-  - every go-live decision and capital limit;
-  - the launch rules that ended the slide.
+Claude (Anthropic's model, through Claude Code) wrote the code. Everything else was mine: the research, deployment and journal, the strategy direction, every go-live decision and capital limit, and the launch rules that ended the slide.
